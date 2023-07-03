@@ -88,7 +88,7 @@ dependencies {
     implementation project(':catvod')
     implementation project(':forcetech')
     implementation project(':ijkplayer')
-    //pythonImplementation project(':pyramid')
+    pythonImplementation project(':pyramid')
     implementation project(':media-lib-database')
     implementation project(':media-lib-datasource')
 	implementation project(':media-lib-datasource-okhttp')

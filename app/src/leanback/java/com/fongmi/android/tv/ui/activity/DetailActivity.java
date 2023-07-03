@@ -412,7 +412,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         } else if (getName().isEmpty()) {
             mBinding.progressLayout.showEmpty();
         } else {
-            checkSearch();
+            checkSearch(false);
         }
     }
 
@@ -565,9 +565,8 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     private void onChange() {
-        mBroken.add(getId());
-        setAutoMode(true);
-        checkSearch();
+        if (getSite().isChangeable()) checkSearch(true);
+        else checkFlag();
     }
 
     private void onLoop() {
@@ -620,10 +619,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     private void onRefresh() {
-        Clock.get().setCallback(null);
-        if (mFlagAdapter.size() == 0) return;
-        if (mEpisodeAdapter.size() == 0) return;
-        getPlayer(getFlag(), getEpisode(), false);
+        onReset(false);
     }
 
     private void onReset() {
@@ -937,7 +933,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     private void onError(ErrorEvent event) {
         Clock.get().setCallback(null);
         showError(event.getMsg());
-        mBroken.add(getId());
         mPlayers.stop();
         startFlow();
     }
@@ -965,13 +960,13 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
 
     private void checkFlag() {
         int position = isGone(mBinding.flag) ? -1 : mBinding.flag.getSelectedPosition();
-        if (position == mFlagAdapter.size() - 1) checkSearch();
+        if (position == mFlagAdapter.size() - 1) checkSearch(false);
         else nextFlag(position);
     }
 
-    private void checkSearch() {
+    private void checkSearch(boolean force) {
         if (mSearchAdapter.size() == 0) initSearch(getName(), true);
-        else if (isAutoMode()) nextSite();
+        else if (isAutoMode() || force) nextSite();
     }
 
     private void initSearch(String keyword, boolean auto) {
@@ -1037,11 +1032,12 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
 
     private void nextSite() {
         if (mSearchAdapter.size() == 0) return;
-        Vod vod = (Vod) mSearchAdapter.get(0);
-        Notify.show(getString(R.string.play_switch_site, vod.getSiteName()));
+        Vod item = (Vod) mSearchAdapter.get(0);
+        Notify.show(getString(R.string.play_switch_site, item.getSiteName()));
         mSearchAdapter.removeItems(0, 1);
+        mBroken.add(getId());
         setInitAuto(false);
-        getDetail(vod);
+        getDetail(item);
     }
 
     private void onPause(boolean visible) {
