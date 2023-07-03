@@ -104,7 +104,11 @@ public class Keep {
     }
 
     public String getVodId() {
-        return getKey().split(AppDatabase.SYMBOL)[1];
+        //return getKey().split(AppDatabase.SYMBOL)[1];
+        int index1, index2;
+        index1 = getKey().indexOf(AppDatabase.SYMBOL, 0) + AppDatabase.SYMBOL.length();
+        index2 = getKey().lastIndexOf(AppDatabase.SYMBOL, getKey().length());
+        return getKey().substring(index1, index2);
     }
 
     public static Keep find(String key) {

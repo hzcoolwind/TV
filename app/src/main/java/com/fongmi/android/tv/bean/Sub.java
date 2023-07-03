@@ -19,6 +19,13 @@ public class Sub {
     @SerializedName("format")
     private String format;
 
+    public Sub(String url, String name, String lang, String format){
+        this.url = url;
+        this.name = name;
+        this.lang = lang;
+        this.format = format;
+    }
+
     public String getUrl() {
         return TextUtils.isEmpty(url) ? "" : url;
     }

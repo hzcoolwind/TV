@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
@@ -22,6 +23,7 @@ import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.C;
+import androidx.media3.common.MimeTypes;
 import androidx.media3.common.Player;
 import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +38,7 @@ import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Part;
 import com.fongmi.android.tv.bean.Site;
+import com.fongmi.android.tv.bean.Sub;
 import com.fongmi.android.tv.bean.Track;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.ActivityDetailBinding;
@@ -340,6 +343,28 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
             setUseParse(ApiConfig.hasParse() && ((result.getPlayUrl().isEmpty() && ApiConfig.get().getFlags().contains(result.getFlag())) || result.getJx() == 1));
             mBinding.control.parse.setVisibility(isUseParse() ? View.VISIBLE : View.GONE);
             int timeout = getSite().isChangeable() ? Constant.TIMEOUT_PLAY : -1;
+
+            String[] vodfiles = result.getUrl().split("/");
+            String vodfile = vodfiles[vodfiles.length-1];
+
+            String url = getId();
+            String[] subfiles = url.split("@@@");
+            if (result.getSubs().isEmpty()){
+                List<Sub>  subs = new ArrayList<Sub>();
+                result.setSubs(subs);
+            }
+            for( int i=1; i< subfiles.length; i++  ){
+                String suburl = result.getUrl().replaceAll(vodfile, Uri.encode(subfiles[i]));
+                Log.d("suburl",  suburl);
+                Sub sub=null;
+                String ext = suburl.substring(suburl.length()-3).toLowerCase();
+                if (ext.equals("ass"))
+                    sub = new Sub(suburl, "外挂字幕", "zh", MimeTypes.TEXT_SSA);
+                else
+                    sub = new Sub(suburl, "外挂字幕", "zh", MimeTypes.APPLICATION_SUBRIP);
+                result.getSubs().add(sub);
+            }
+
             mPlayers.start(result, isUseParse(), timeout);
         });
         mViewModel.result.observe(this, result -> {

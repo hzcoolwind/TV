@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.bean;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -188,6 +189,10 @@ public class Result {
 
     public List<Sub> getSubs() {
         return subs == null ? Collections.emptyList() : subs;
+    }
+
+    public void setSubs(List<Sub> list) {
+        this.subs = list;
     }
 
     public String getRealUrl() {
