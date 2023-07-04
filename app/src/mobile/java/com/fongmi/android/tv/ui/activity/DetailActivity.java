@@ -730,8 +730,8 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         if (isFullscreen()) return;
         mBinding.video.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         setRequestedOrientation(mPlayers.isPortrait() ? ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+        getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
         mBinding.control.full.setVisibility(View.GONE);
         setRotate(mPlayers.isPortrait());
         App.post(mR3, 2000);
