@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,6 +26,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.C;
+import androidx.media3.common.MimeTypes;
 import androidx.media3.common.Player;
 import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,6 +41,7 @@ import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
+import com.fongmi.android.tv.bean.Sub;
 import com.fongmi.android.tv.bean.Track;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.cast.CastVideo;
@@ -325,6 +328,8 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mPlayers.set(getExo(), getIjk());
         if (ResUtil.isLand(this)) enterFullscreen();
         getExo().getSubtitleView().setStyle(ExoUtil.getCaptionStyle());
+        getExo().getSubtitleView().setBottomPaddingFraction(0.05f);
+        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
     }
 
@@ -426,6 +431,28 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         if (mControlDialog != null && mControlDialog.isVisible()) mControlDialog.setParseVisible(isUseParse());
         mBinding.control.parse.setVisibility(isFullscreen() && isUseParse() ? View.VISIBLE : View.GONE);
         int timeout = getSite().isChangeable() ? Constant.TIMEOUT_PLAY : -1;
+
+        String[] vodfiles = result.getUrl().split("/");
+        String vodfile = vodfiles[vodfiles.length-1];
+
+        String url = getId();
+        String[] subfiles = url.split("@@@");
+        if (result.getSubs().isEmpty()){
+            List<Sub>  subs = new ArrayList<Sub>();
+            result.setSubs(subs);
+        }
+        for( int i=1; i< subfiles.length; i++  ){
+            String suburl = result.getUrl().replaceAll(vodfile, Uri.encode(subfiles[i]));
+            Log.d("suburl",  suburl);
+            Sub sub=null;
+            String ext = suburl.substring(suburl.length()-3).toLowerCase();
+            if (ext.equals("ass"))
+                sub = new Sub(suburl, "外挂字幕", "zh", MimeTypes.TEXT_SSA);
+            else
+                sub = new Sub(suburl, "外挂字幕", "zh", MimeTypes.APPLICATION_SUBRIP);
+            result.getSubs().add(sub);
+        }
+
         mPlayers.start(result, isUseParse(), timeout);
         mBinding.swipeLayout.setRefreshing(false);
     }
@@ -703,6 +730,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         if (isFullscreen()) return;
         mBinding.video.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         setRequestedOrientation(mPlayers.isPortrait() ? ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         mBinding.control.full.setVisibility(View.GONE);
         setRotate(mPlayers.isPortrait());
@@ -713,6 +741,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     private void exitFullscreen() {
         if (!isFullscreen()) return;
+        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         mBinding.episode.scrollToPosition(mEpisodeAdapter.getPosition());
@@ -886,9 +915,11 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     public void onPlayerEvent(PlayerEvent event) {
         switch (event.getState()) {
             case 0:
-                checkPosition();
-                setUrl(event.getUrl());
+                setPosition();
+                setInitTrack(true);
                 setTrackVisible(false);
+                setUrl(event.getUrl());
+                Clock.get().setCallback(this);
                 break;
             case Player.STATE_IDLE:
                 break;
@@ -914,10 +945,8 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         }
     }
 
-    private void checkPosition() {
+    private void setPosition() {
         mPlayers.seekTo(Math.max(mHistory.getOpening(), mHistory.getPosition()), false);
-        Clock.get().setCallback(this);
-        setInitTrack(true);
     }
 
     private void checkRotate() {
@@ -956,13 +985,19 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     private void checkError(ErrorEvent event) {
-        if (getSite().getPlayerType() == -1 && event.isFormat() && getToggleCount() < 3) {
+        if (getSite().getPlayerType() == -1 && event.isFormat() && getToggleCount() < 2 && mPlayers.getPlayer() != Players.SYS) {
             toggleCount++;
-            onPlayer();
+            nextPlayer();
         } else {
             resetToggle();
             onError(event);
         }
+    }
+
+    private void nextPlayer() {
+        mPlayers.nextPlayer();
+        setPlayerView();
+        onRefresh();
     }
 
     private void onError(ErrorEvent event) {
