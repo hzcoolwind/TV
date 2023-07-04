@@ -40,11 +40,11 @@ public class Updater implements Download.Callback {
     }
 
     private String getJson() {
-        return Github.get().getBranchPath(branch, "/release/" + BuildConfig.FLAVOR_mode + ".json");
+        return Github.get().getBranchPath(branch, "/myrelease/" + BuildConfig.FLAVOR_mode + ".json");
     }
 
     private String getApk() {
-        return Github.get().getBranchPath(branch, "/release/" + BuildConfig.FLAVOR_mode + "-" + BuildConfig.FLAVOR_api + "-" + BuildConfig.FLAVOR_abi + ".apk");
+        return Github.get().getBranchPath(branch, "/myrelease/" + BuildConfig.FLAVOR_mode + "-" + BuildConfig.FLAVOR_api + "-" + BuildConfig.FLAVOR_abi + ".apk");
     }
 
     private Updater() {

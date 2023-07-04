@@ -20,20 +20,20 @@ android {
     productFlavors {
         leanback {
             dimension "mode"
-            versionCode 500
-            versionName "CW改版#20230703-2"
+            versionCode 201
+            versionName "基于FongMi的TV项目CW改版-20230704#1"
         }
         mobile {
             dimension "mode"
-            versionCode 500
-            versionName "CW改版#20230703-2"
+            versionCode 201
+            versionName "基于FongMi的TV项目CW改版-20230704#1"
         }
         java {
             dimension "api"
         }
-        python {
-            dimension "api"
-        }
+//        python {
+//            dimension "api"
+//        }
         armeabi_v7a {
             dimension "abi"
             //noinspection ChromeOsAbiSupport
