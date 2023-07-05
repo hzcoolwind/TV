@@ -21,12 +21,12 @@ android {
         leanback {
             dimension "mode"
             versionCode 202
-            versionName "基于FongMi的TV项目CW改版-20230705#1"
+            versionName "基于FongMi的TV项目CW改版-20230705#2"
         }
         mobile {
             dimension "mode"
             versionCode 202
-            versionName "基于FongMi的TV项目CW改版-20230705#1"
+            versionName "基于FongMi的TV项目CW改版-20230705#2"
         }
         java {
             dimension "api"
