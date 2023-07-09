@@ -21,12 +21,17 @@ package tv.danmaku.ijk.media.player;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.media.TimedText;
 import android.net.Uri;
 import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+
+import com.avery.subtitle.format.FormatASS;
+import com.avery.subtitle.model.Subtitle;
+import com.avery.subtitle.model.TimedTextObject;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -310,7 +315,20 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
 
     @Override
     public void onTimedText(MediaPlayer mp, TimedText text) {
-        if (text != null) notifyOnTimedText(new IjkTimedText(text.getBounds(), text.getText()));
+        //if (text != null) notifyOnTimedText(new IjkTimedText(text.getBounds(), text.getText()));
+        Subtitle caption = new Subtitle();
+        String[] dialogueFormat = new String[0];
+        float timer = 100;
+        TimedTextObject tto = new TimedTextObject();
+
+        if (text != null){
+            if (text.getText().startsWith("Dialogue:")){
+                caption =  new FormatASS().parseDialogueForASS(text.getText().split(":",2)[1].trim().split(",",10),dialogueFormat,timer, tto);
+                notifyOnTimedText(new IjkTimedText(new Rect(0, 0, 1, 1), caption.content));
+            } else {
+                notifyOnTimedText(new IjkTimedText(new Rect(0, 0, 1, 1), text.getText()));
+            }
+        }
     }
 
     @Override

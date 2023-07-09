@@ -331,6 +331,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         getExo().getSubtitleView().setBottomPaddingFraction(0.05f);
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
     }
 
     private void setScale(int scale) {
@@ -732,6 +733,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         setRequestedOrientation(mPlayers.isPortrait() ? ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
         mBinding.control.full.setVisibility(View.GONE);
         setRotate(mPlayers.isPortrait());
         App.post(mR3, 2000);
@@ -743,6 +745,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         if (!isFullscreen()) return;
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         mBinding.episode.scrollToPosition(mEpisodeAdapter.getPosition());
         mBinding.control.full.setVisibility(View.VISIBLE);
@@ -896,8 +899,8 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     @Override
     public void onTrackClick(Track item) {
-        item.setKey(getHistoryKey());
-        item.save();
+        //item.setKey(getHistoryKey());
+        //item.save();
     }
 
     @Override

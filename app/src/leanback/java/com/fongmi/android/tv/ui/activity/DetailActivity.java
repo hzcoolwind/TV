@@ -317,6 +317,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.control.player.setText(mPlayers.getPlayerText());
         getExo().setVisibility(mPlayers.isExo() ? View.VISIBLE : View.GONE);
         getIjk().setVisibility(mPlayers.isIjk() ? View.VISIBLE : View.GONE);
+        getIjk().getOutSubtitleView().setVisibility(View.VISIBLE);
         mBinding.control.reset.setText(ResUtil.getStringArray(R.array.select_reset)[Prefers.getReset()]);
     }
 
@@ -330,7 +331,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         getExo().getSubtitleView().setBottomPaddingFraction(0.05f);
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
     }
 
     private void setScale(int scale) {
@@ -534,6 +535,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.video.setForeground(null);
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
         mBinding.video.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mBinding.flag.setSelectedPosition(getCurrentFlag());
         mKeyDown.setFull(true);
@@ -545,6 +547,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.video.setForeground(ResUtil.getDrawable(R.drawable.selector_video));
         getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         mBinding.video.setLayoutParams(mFrameParams);
         mKeyDown.setFull(false);
         setFullscreen(false);
@@ -849,8 +852,8 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
 
     @Override
     public void onTrackClick(Track item) {
-        item.setKey(getHistoryKey());
-        item.save();
+        //item.setKey(getHistoryKey());
+        //item.save();
     }
 
     @Override
@@ -917,6 +920,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
             setInitTrack(false);
             mPlayers.setTrack(Track.find(getHistoryKey()));
         }
+        //getIjk().getOutSubtitleView().setVisibility(View.VISIBLE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

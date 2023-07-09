@@ -20,13 +20,13 @@ android {
     productFlavors {
         leanback {
             dimension "mode"
-            versionCode 202
-            versionName "基于FongMi的TV项目CW改版-20230707#1"
+            versionCode 203
+            versionName "基于FongMi的TV项目CW改版-20230710#1"
         }
         mobile {
             dimension "mode"
-            versionCode 202
-            versionName "基于FongMi的TV项目CW改版-20230707#1"
+            versionCode 203
+            versionName "基于FongMi的TV项目CW改版-20230710#1"
         }
         java {
             dimension "api"
@@ -128,6 +128,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:' + jsoupVersion
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
     implementation('org.simpleframework:simple-xml:2.7.1') { exclude group: 'stax', module: 'stax-api' exclude group: 'xpp3', module: 'xpp3' }
+
     leanbackImplementation 'androidx.leanback:leanback:1.2.0-alpha02'
     leanbackImplementation 'me.jessyan:autosize:1.2.1'
     mobileImplementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'

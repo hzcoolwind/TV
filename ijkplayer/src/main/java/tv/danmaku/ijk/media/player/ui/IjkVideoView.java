@@ -14,6 +14,9 @@ import android.widget.MediaController;
 
 import androidx.annotation.NonNull;
 
+import com.avery.subtitle.model.Sub;
+import com.avery.subtitle.widget.SimpleSubtitleView;
+
 import java.util.List;
 import java.util.Map;
 
@@ -74,6 +77,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private final FrameLayout mContentFrame;
     private IMediaPlayer mPlayer;
 
+    private SimpleSubtitleView mOutSubtitleView;
+    private Sub sub;
+
     public IjkVideoView(Context context) {
         this(context, null);
     }
@@ -89,6 +95,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         if (attrs != null) initAttr(context, attrs, defStyleAttr);
         mContentFrame = findViewById(R.id.ijk_content_frame);
         mSubtitleView = findViewById(R.id.ijk_subtitle);
+
+        mOutSubtitleView = findViewById(R.id.subtitle_view);
+
         mCurrentPlayer = PLAYER_NONE;
         mCurrentState = STATE_IDLE;
         mTargetState = STATE_IDLE;
@@ -172,6 +181,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
     public void setMediaSource(MediaSource source) {
         setVideoURI(source.getUri(), source.getHeaders());
+        if (!source.getSubs().isEmpty()) {
+            sub = source.getSubs().get(0);
+        }
     }
 
     private void setVideoURI(Uri uri, Map<String, String> headers) {
@@ -214,6 +226,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     public void release() {
         if (mPlayer == null) return;
         mCurrentPlayer = PLAYER_NONE;
+        mOutSubtitleView.destroy(); // 记得销毁
         mPlayer.release();
         mPlayer = null;
         reset();
@@ -222,6 +235,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private void reset() {
         removeRenderView();
         mSubtitleView.setText("");
+        mOutSubtitleView.setText("");
         mTargetState = STATE_IDLE;
         mCurrentState = STATE_IDLE;
         mCurrentBufferPosition = 0;
@@ -292,6 +306,10 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
     public SubtitleView getSubtitleView() {
         return mSubtitleView;
+    }
+
+    public SimpleSubtitleView getOutSubtitleView() {
+        return mOutSubtitleView;
     }
 
     @Override
@@ -382,11 +400,14 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private void setPreferredTextLanguage() {
         List<ITrackInfo> trackInfos = getTrackInfo();
         int selected = getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_TEXT);
+        if (selected>=0){
+            mPlayer.deselectTrack(selected);
+        }
         for (int index = 0; index < trackInfos.size(); index++) {
             ITrackInfo trackInfo = trackInfos.get(index);
             if (trackInfo.getTrackType() != ITrackInfo.MEDIA_TRACK_TYPE_TEXT) continue;
             if (trackInfo.getLanguage().equals("zh") && index != selected) {
-                mPlayer.selectTrack(index);
+                //mPlayer.selectTrack(index);
                 break;
             }
         }
@@ -443,6 +464,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     @Override
     public void onPrepared(IMediaPlayer mp) {
         setPreferredTextLanguage();
+        // 绑定MediaPlayer
+        mOutSubtitleView.bindToMediaPlayer(mPlayer);
+        mOutSubtitleView.setSubtitlePath(sub.getUrl());
         mCurrentState = STATE_PREPARED;
         if (mCurrentSpeed > 0) setSpeed(mCurrentSpeed);
         if (mStartPosition > 0) seekTo(mStartPosition);
