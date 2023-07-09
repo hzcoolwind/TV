@@ -13,8 +13,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:layout_margin="16dp"
+            android:layout_margin="8dp"
             android:gravity="center"
+            android:textStyle="bold" />
+
+        <com.avery.subtitle.widget.SimpleSubtitleView
+            android:id="@+id/subtitle_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:text=""
+            android:textColor="#ffffff"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
     </FrameLayout>

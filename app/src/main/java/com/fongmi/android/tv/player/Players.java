@@ -1,5 +1,7 @@
 package com.fongmi.android.tv.player;
 
+import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
@@ -23,6 +25,7 @@ import com.fongmi.android.tv.utils.Prefers;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.github.catvod.crawler.SpiderDebug;
 
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
@@ -355,7 +358,7 @@ public class Players implements Player.Listener, IMediaPlayer.Listener, Analytic
 
     private void setMediaSource(Map<String, String> headers, String url) {
         SpiderDebug.log(errorCode + "," + url);
-        if (isIjk()) ijkPlayer.setMediaSource(IjkUtil.getSource(headers, url));
+        if (isIjk()) ijkPlayer.setMediaSource(IjkUtil.getSource(headers, url, Collections.emptyList()));
         if (isExo()) exoPlayer.setMediaSource(ExoUtil.getSource(headers, url, errorCode));
         if (isExo()) exoPlayer.prepare();
         setTimeoutCheck(url);
@@ -386,8 +389,10 @@ public class Players implements Player.Listener, IMediaPlayer.Listener, Analytic
     private void setTrackIjk(Track item) {
         if (item.isSelected()) {
             ijkPlayer.selectTrack(item.getType(), item.getTrack());
+            ijkPlayer.getOutSubtitleView().setVisibility(View.INVISIBLE);
         } else {
             ijkPlayer.deselectTrack(item.getType(), item.getTrack());
+            ijkPlayer.getOutSubtitleView().setVisibility(View.VISIBLE);
         }
     }
 
