@@ -78,7 +78,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private IMediaPlayer mPlayer;
 
     private SimpleSubtitleView mOutSubtitleView;
-    private Sub sub;
+    private Sub sub = null;
 
     public IjkVideoView(Context context) {
         this(context, null);
@@ -183,6 +183,8 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         setVideoURI(source.getUri(), source.getHeaders());
         if (!source.getSubs().isEmpty()) {
             sub = source.getSubs().get(0);
+        } else {
+            sub = null;
         }
     }
 
@@ -466,7 +468,8 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         setPreferredTextLanguage();
         // 绑定MediaPlayer
         mOutSubtitleView.bindToMediaPlayer(mPlayer);
-        mOutSubtitleView.setSubtitlePath(sub.getUrl());
+        if (sub!=null)
+            mOutSubtitleView.setSubtitlePath(sub.getUrl());
         mCurrentState = STATE_PREPARED;
         if (mCurrentSpeed > 0) setSpeed(mCurrentSpeed);
         if (mStartPosition > 0) seekTo(mStartPosition);
