@@ -258,12 +258,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public void onItemClick(Vod item) {
-        DetailActivity.start(this, item.getVodId(), item.getVodName());
+        //DetailActivity.start(this, item.getVodId(), item.getVodName());
+        CollectActivity.start(this, item.getVodName());
     }
 
     @Override
     public boolean onLongClick(Vod item) {
-        CollectActivity.start(this, item.getVodName());
+        //CollectActivity.start(this, item.getVodName());
+        DetailActivity.start(this, item.getVodId(), item.getVodName());
         return true;
     }
 
