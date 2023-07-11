@@ -1,4 +1,4 @@
-package com.fongmi.android.tv.player.parse;
+package com.fongmi.android.tv.player;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.Constant;
@@ -115,7 +115,7 @@ public class ParseJob implements ParseCallback {
     private void jsonMix(String webUrl, String flag) throws Exception {
         LinkedHashMap<String, HashMap<String, String>> jxs = new LinkedHashMap<>();
         for (Parse item : ApiConfig.get().getParses()) jxs.put(item.getName(), item.mixMap());
-        checkResult(Result.fromObject(ApiConfig.get().jsonExtMix(flag + "@", parse.getUrl(), parse.getName(), jxs, webUrl)));
+        checkResult(Result.fromObject(ApiConfig.get().jsonExtMix(flag, parse.getUrl(), parse.getName(), jxs, webUrl)));
     }
 
     private void godParse(String webUrl, String flag) throws Exception {

@@ -123,6 +123,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     private Runnable mR1;
     private Runnable mR2;
     private Runnable mR3;
+    private Runnable mR4;
     private String url;
     private PiP mPiP;
 
@@ -135,6 +136,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     public static void file(FragmentActivity activity, String path) {
+        if (TextUtils.isEmpty(path)) return;
         String name = new File(path).getName();
         if (Utils.hasPermission(activity)) start(activity, "push_agent", "file://" + path, name);
         else PermissionX.init(activity).permissions(Manifest.permission.WRITE_EXTERNAL_STORAGE).request((allGranted, grantedList, deniedList) -> start(activity, "push_agent", "file://" + path, name));
@@ -244,6 +246,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mR1 = this::hideControl;
         mR2 = this::setTraffic;
         mR3 = this::setOrient;
+        mR4 = this::showEmpty;
         mPiP = new PiP();
         setRecyclerView();
         setVideoView();
@@ -316,6 +319,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mBinding.control.action.player.setText(mPlayers.getPlayerText());
         getExo().setVisibility(mPlayers.isExo() ? View.VISIBLE : View.GONE);
         getIjk().setVisibility(mPlayers.isIjk() ? View.VISIBLE : View.GONE);
+        if (mControlDialog != null && mControlDialog.isVisible()) mControlDialog.updatePlayer();
         mBinding.control.action.reset.setText(ResUtil.getStringArray(R.array.select_reset)[Prefers.getReset()]);
         mBinding.video.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> mPiP.update(getActivity(), view));
     }
@@ -381,11 +385,18 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         if (isFromCollect()) {
             finish();
         } else if (getName().isEmpty()) {
-            mBinding.swipeLayout.setEnabled(true);
-            mBinding.progressLayout.showEmpty();
+            showEmpty();
         } else {
             checkSearch(false);
+            App.post(mR4, 10000);
         }
+    }
+
+    private void showEmpty() {
+        showError(getString(R.string.error_play_url));
+        mBinding.swipeLayout.setEnabled(true);
+        mBinding.progressLayout.showEmpty();
+        stopSearch();
     }
 
     private void setDetail(Vod item) {
@@ -478,9 +489,14 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     @Override
     public void onItemClick(Parse item) {
+        setParse(item);
+        onRefresh();
+    }
+
+    private void setParse(Parse item) {
         ApiConfig.get().setParse(item);
         notifyItemChanged(mParseAdapter);
-        onRefresh();
+        if (mControlDialog != null && mControlDialog.isVisible()) mControlDialog.updateParse();
     }
 
     private void setEpisodeAdapter(List<Vod.Flag.Episode> items) {
@@ -1028,8 +1044,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     private void initParse() {
         if (mParseAdapter.getItemCount() == 0) return;
-        ApiConfig.get().setParse(mParseAdapter.first());
-        notifyItemChanged(mParseAdapter);
+        setParse(mParseAdapter.first());
     }
 
     private void checkFlag() {
@@ -1078,6 +1093,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mBinding.search.setVisibility(View.VISIBLE);
         mSearchAdapter.addAll(items);
         if (isInitAuto()) nextSite();
+        App.removeCallbacks(mR4);
     }
 
     private void setSearch(Vod item) {
@@ -1386,7 +1402,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         Clock.get().release();
         RefreshEvent.history();
         PlaybackService.stop();
-        App.removeCallbacks(mR1, mR2, mR3);
+        App.removeCallbacks(mR1, mR2, mR3, mR4);
         mViewModel.result.removeObserver(mObserveDetail);
         mViewModel.player.removeObserver(mObservePlayer);
         mViewModel.search.removeObserver(mObserveSearch);

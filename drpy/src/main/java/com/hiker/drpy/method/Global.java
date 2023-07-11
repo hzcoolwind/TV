@@ -2,11 +2,11 @@ package com.hiker.drpy.method;
 
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 
 import androidx.annotation.Keep;
 
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.spider.Proxy;
 import com.google.gson.Gson;
 import com.hiker.drpy.Parser;
 import com.whl.quickjs.wrapper.JSArray;
@@ -64,6 +64,12 @@ public class Global {
                 }
             });
         }
+    }
+
+    @Keep
+    @JSMethod
+    public String getProxy(boolean local) {
+        return Proxy.getUrl() + "?do=js";
     }
 
     @Keep
@@ -157,7 +163,7 @@ public class Global {
 
     private Call call(String url, JSONObject object, Headers headers) {
         int redirect = object.optInt("redirect", 1);
-        int timeout = object.optInt("timeout", OkHttp.TIMEOUT);
+        int timeout = object.optInt("timeout", 10000);
         OkHttpClient client = redirect == 1 ? OkHttp.client() : OkHttp.noRedirect();
         client = client.newBuilder().connectTimeout(timeout, TimeUnit.MILLISECONDS).readTimeout(timeout, TimeUnit.MILLISECONDS).writeTimeout(timeout, TimeUnit.MILLISECONDS).build();
         return client.newCall(getRequest(url, object, headers));

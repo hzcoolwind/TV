@@ -94,7 +94,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
 
     @Override
     public void stop() throws IllegalStateException {
-        mMediaPlayer.stop();
+        if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
     }
 
     @Override

@@ -11,7 +11,7 @@ android {
         minSdk 21
         targetSdk 28
         python {
-            buildPython "C:/Users/FongMi.DIREK/Anaconda3/envs/py38/python.exe"
+            buildPython "/usr/local/bin/python3"
             pip {
                 install "lxml"
                 install 'pycryptodome'

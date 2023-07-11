@@ -114,6 +114,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     private int toggleCount;
     private Runnable mR1;
     private Runnable mR2;
+    private Runnable mR3;
 
     public static void push(FragmentActivity activity, Uri uri) {
         if ("smb".equals(uri.getScheme()) || "http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
@@ -124,6 +125,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     public static void file(FragmentActivity activity, String path) {
+        if (TextUtils.isEmpty(path)) return;
         String name = new File(path).getName();
         if (Utils.hasPermission(activity)) start(activity, "push_agent", "file://" + path, name, true);
         else PermissionX.init(activity).permissions(Manifest.permission.WRITE_EXTERNAL_STORAGE).request((allGranted, grantedList, deniedList) -> start(activity, "push_agent", "file://" + path, name, true));
@@ -238,6 +240,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBroken = new ArrayList<>();
         mR1 = this::hideControl;
         mR2 = this::setTraffic;
+        mR3 = this::showEmpty;
         setRecyclerView();
         setVideoView();
         setViewModel();
@@ -414,10 +417,16 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         if (isFromCollect()) {
             finish();
         } else if (getName().isEmpty()) {
-            mBinding.progressLayout.showEmpty();
+            showEmpty();
         } else {
             checkSearch(false);
+            App.post(mR3, 10000);
         }
+    }
+
+    private void showEmpty() {
+        mBinding.progressLayout.showEmpty();
+        stopSearch();
     }
 
     private void setDetail(Vod item) {
@@ -1019,6 +1028,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mSearchAdapter.addAll(mSearchAdapter.size(), items);
         mBinding.search.setVisibility(View.VISIBLE);
         if (isInitAuto()) nextSite();
+        App.removeCallbacks(mR3);
     }
 
     private void setSearch(Vod item) {
@@ -1247,6 +1257,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         super.onDestroy();
         mPlayers.release();
         RefreshEvent.history();
-        App.removeCallbacks(mR1, mR2);
+        App.removeCallbacks(mR1, mR2, mR3);
     }
 }

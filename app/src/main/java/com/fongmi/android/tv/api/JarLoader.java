@@ -25,7 +25,7 @@ public class JarLoader {
     private final ConcurrentHashMap<String, DexClassLoader> loaders;
     private final ConcurrentHashMap<String, Method> methods;
     private final ConcurrentHashMap<String, Spider> spiders;
-    private String jar;
+    private String recent;
 
     public JarLoader() {
         this.loaders = new ConcurrentHashMap<>();
@@ -34,13 +34,14 @@ public class JarLoader {
     }
 
     public void clear() {
+        for (Spider spider : spiders.values()) spider.destroy();
         this.loaders.clear();
         this.methods.clear();
         this.spiders.clear();
     }
 
-    public void setJar(String jar) {
-        this.jar = jar;
+    public void setRecent(String recent) {
+        this.recent = recent;
     }
 
     private void load(String key, File file) throws Throwable {
@@ -116,7 +117,9 @@ public class JarLoader {
 
     public Object[] proxyInvoke(Map<?, ?> params) {
         try {
-            Method method = methods.get(Utils.getMd5(jar));
+            Spider spider = spiders.get(recent);
+            if (spider != null) return spider.proxyLocal(params);
+            Method method = methods.get(Utils.getMd5(recent));
             if (method != null) return (Object[]) method.invoke(null, params);
             else return null;
         } catch (Exception e) {
