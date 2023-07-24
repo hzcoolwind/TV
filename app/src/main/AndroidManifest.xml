@@ -39,6 +39,11 @@
 
         </provider>
 
+        <provider
+            android:name="com.fongmi.quickjs.Provider"
+            android:authorities="com.fongmi.quickjs.provider"
+            android:exported="false" />
+
         <activity
             android:name=".ui.activity.CrashActivity"
             android:process=":error_activity" />

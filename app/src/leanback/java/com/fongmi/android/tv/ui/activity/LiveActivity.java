@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.activity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -35,10 +36,9 @@ import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.LiveCallback;
 import com.fongmi.android.tv.impl.PassCallback;
 import com.fongmi.android.tv.model.LiveViewModel;
+import com.fongmi.android.tv.player.ExoUtil;
 import com.fongmi.android.tv.player.Players;
-import com.fongmi.android.tv.player.source.Force;
-import com.fongmi.android.tv.player.source.TVBus;
-import com.fongmi.android.tv.player.source.ZLive;
+import com.fongmi.android.tv.player.Source;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.CustomKeyDownLive;
 import com.fongmi.android.tv.ui.custom.CustomLiveListView;
@@ -159,6 +159,7 @@ public class LiveActivity extends BaseActivity implements GroupPresenter.OnClick
         mBinding.control.speed.setOnClickListener(view -> onSpeed());
         mBinding.control.invert.setOnClickListener(view -> onInvert());
         mBinding.control.across.setOnClickListener(view -> onAcross());
+        mBinding.control.change.setOnClickListener(view -> onChange());
         mBinding.control.player.setOnClickListener(view -> onPlayer());
         mBinding.control.decode.setOnClickListener(view -> onDecode());
         mBinding.control.speed.setOnLongClickListener(view -> onSpeedLong());
@@ -192,11 +193,15 @@ public class LiveActivity extends BaseActivity implements GroupPresenter.OnClick
     private void setVideoView() {
         mPlayers.set(getExo(), getIjk());
         setScale(Prefers.getLiveScale());
-        findViewById(R.id.timeBar).setNextFocusUpId(R.id.home);
+        getExo().getSubtitleView().setUserDefaultTextSize();
+        getExo().getSubtitleView().setStyle(ExoUtil.getCaptionStyle());
+        getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         mBinding.control.speed.setText(mPlayers.getSpeedText());
         mBinding.control.invert.setActivated(Prefers.isInvert());
         mBinding.control.across.setActivated(Prefers.isAcross());
+        mBinding.control.change.setActivated(Prefers.isChange());
         mBinding.control.home.setVisibility(LiveConfig.isOnly() ? View.GONE : View.VISIBLE);
+        findViewById(R.id.timeBar).setNextFocusUpId(R.id.player);
     }
 
     private void setScale(int scale) {
@@ -305,6 +310,11 @@ public class LiveActivity extends BaseActivity implements GroupPresenter.OnClick
     private void onAcross() {
         Prefers.putAcross(!Prefers.isAcross());
         mBinding.control.across.setActivated(Prefers.isAcross());
+    }
+
+    private void onChange() {
+        Prefers.putChange(!Prefers.isChange());
+        mBinding.control.change.setActivated(Prefers.isChange());
     }
 
     private void onPlayer() {
@@ -594,18 +604,18 @@ public class LiveActivity extends BaseActivity implements GroupPresenter.OnClick
     }
 
     private void onError(ErrorEvent event) {
+        showError(event.getMsg());
         mPlayers.stop();
-        startFlow(event);
+        startFlow();
     }
 
-    private void startFlow(ErrorEvent event) {
+    private void startFlow() {
+        if (!Prefers.isChange()) return;
         if (!mChannel.isLast()) {
             nextLine(true);
         } else if (isGone(mBinding.recycler)) {
             mChannel.setLine(0);
             nextChannel();
-        } else {
-            showError(event.getMsg());
         }
     }
 
@@ -807,9 +817,7 @@ public class LiveActivity extends BaseActivity implements GroupPresenter.OnClick
     protected void onDestroy() {
         super.onDestroy();
         mPlayers.release();
-        Force.get().stop();
-        ZLive.get().stop();
-        TVBus.get().stop();
+        Source.get().destroy();
         App.removeCallbacks(mR1, mR2, mR3, mR4);
     }
 }

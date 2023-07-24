@@ -53,6 +53,7 @@ import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.player.ExoUtil;
 import com.fongmi.android.tv.player.Players;
+import com.fongmi.android.tv.player.Source;
 import com.fongmi.android.tv.receiver.PiPReceiver;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.ui.adapter.EpisodeAdapter;
@@ -151,8 +152,13 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     public static void start(Activity activity, String key, String id, String name) {
+        start(activity, key, id, name, null);
+    }
+
+    public static void start(Activity activity, String key, String id, String name, String mark) {
         Intent intent = new Intent(activity, DetailActivity.class);
         intent.putExtra("name", name);
+        intent.putExtra("mark", mark);
         intent.putExtra("key", key);
         intent.putExtra("id", id);
         activity.startActivity(intent);
@@ -160,6 +166,10 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     private String getName() {
         return getIntent().getStringExtra("name");
+    }
+
+    private String getMark() {
+        return getIntent().getStringExtra("mark");
     }
 
     private String getKey() {
@@ -387,8 +397,9 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         } else if (getName().isEmpty()) {
             showEmpty();
         } else {
-            checkSearch(false);
+            mBinding.name.setText(getName());
             App.post(mR4, 10000);
+            checkSearch(false);
         }
     }
 
@@ -402,7 +413,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     private void setDetail(Vod item) {
         mBinding.progressLayout.showContent();
         mBinding.video.setTag(item.getVodPic());
-        mBinding.name.setText(item.getVodName());
+        mBinding.name.setText(item.getVodName(getName()));
         setText(mBinding.remark, 0, item.getVodRemarks());
         setText(mBinding.site, R.string.detail_site, getSite().getName());
         setText(mBinding.actor, R.string.detail_actor, Html.fromHtml(item.getVodActor()).toString());
@@ -411,6 +422,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mBinding.contentLayout.setVisibility(mBinding.content.getVisibility());
         mFlagAdapter.addAll(item.getVodFlags());
         setOther(mBinding.other, item);
+        checkHistory(item);
         checkFlag(item);
         checkKeepImg();
     }
@@ -553,7 +565,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     private void onCast() {
-        CastDialog.create().history(mHistory).video(CastVideo.get(getName(), getUrl())).fm(true).show(this);
+        CastDialog.create().history(mHistory).video(CastVideo.get(mBinding.name.getText().toString(), getUrl())).fm(true).show(this);
     }
 
     private void onFull() {
@@ -850,16 +862,20 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     private void checkFlag(Vod item) {
-        mBinding.flag.setVisibility(item.getVodFlags().isEmpty() ? View.GONE : View.VISIBLE);
-        if (isVisible(mBinding.flag)) checkHistory(item);
-        else ErrorEvent.episode();
+        boolean empty = item.getVodFlags().isEmpty();
+        mBinding.flag.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) {
+            ErrorEvent.episode();
+        } else {
+            onItemClick(mHistory.getFlag(), true);
+            if (mHistory.isRevSort()) reverseEpisode(true);
+        }
     }
 
     private void checkHistory(Vod item) {
         mHistory = History.find(getHistoryKey());
         mHistory = mHistory == null ? createHistory(item) : mHistory;
-        onItemClick(mHistory.getFlag(), true);
-        if (mHistory.isRevSort()) reverseEpisode(true);
+        if (!TextUtils.isEmpty(getMark())) mHistory.setVodRemarks(getMark());
         mBinding.control.action.opening.setText(mHistory.getOpening() == 0 ? getString(R.string.play_op) : mPlayers.stringToTime(mHistory.getOpening()));
         mBinding.control.action.ending.setText(mHistory.getEnding() == 0 ? getString(R.string.play_ed) : mPlayers.stringToTime(mHistory.getEnding()));
         mBinding.control.action.speed.setText(mPlayers.setSpeed(mHistory.getSpeed()));
@@ -921,10 +937,11 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     @Override
     public void onTimeChanged() {
-        long current = mPlayers.getPosition();
-        long duration = mPlayers.getDuration();
-        if (current >= 0 && duration > 0) App.execute(() -> mHistory.update(current, duration));
-        if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + current >= duration) {
+        long position, duration;
+        mHistory.setPosition(position = mPlayers.getPosition());
+        mHistory.setDuration(duration = mPlayers.getDuration());
+        if (position >= 0 && duration > 0) App.execute(() -> mHistory.update());
+        if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + position >= duration) {
             Clock.get().setCallback(null);
             checkNext();
         }
@@ -1054,7 +1071,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     private void checkSearch(boolean force) {
-        if (mSearchAdapter.getItemCount() == 0) initSearch(getName(), true);
+        if (mSearchAdapter.getItemCount() == 0) initSearch(mBinding.name.getText().toString(), true);
         else if (isAutoMode() || force) nextSite();
     }
 
@@ -1065,14 +1082,18 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         startSearch(keyword);
     }
 
+    private boolean isPass(Site item) {
+        if (isAutoMode() && !item.isChangeable()) return false;
+        if (isAutoMode() && item.getKey().equals(getKey())) return false;
+        return item.isSearchable();
+    }
+
     private void startSearch(String keyword) {
         mSearchAdapter.clear();
+        List<Site> sites = new ArrayList<>();
         mExecutor = Executors.newFixedThreadPool(Constant.THREAD_POOL * 2);
-        for (Site site : ApiConfig.get().getSites()) {
-            if (site.getKey().equals(getKey())) continue;
-            if (isAutoMode() && !site.isChangeable()) continue;
-            if (site.isSearchable()) mExecutor.execute(() -> search(site, keyword));
-        }
+        for (Site item : ApiConfig.get().getSites()) if (isPass(item)) sites.add(item);
+        for (Site site : sites) mExecutor.execute(() -> search(site, keyword));
     }
 
     private void stopSearch() {
@@ -1093,6 +1114,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         mBinding.search.setVisibility(View.VISIBLE);
         mSearchAdapter.addAll(items);
         if (isInitAuto()) nextSite();
+        if (items.isEmpty()) return;
         App.removeCallbacks(mR4);
     }
 
@@ -1102,7 +1124,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     }
 
     private boolean mismatch(Vod item) {
-        String keyword = getName();
+        String keyword = mBinding.name.getText().toString();
         if (mBroken.contains(item.getVodId())) return true;
         if (isAutoMode()) return !item.getVodName().equals(keyword);
         else return !item.getVodName().contains(keyword);
@@ -1233,6 +1255,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     @Override
     public void onSpeedUp() {
+        if (!mPlayers.isPlaying()) return;
         mBinding.control.action.speed.setText(mPlayers.setSpeed(mPlayers.getSpeed() < 3 ? 3 : 5));
         mBinding.widget.speed.startAnimation(ResUtil.getAnim(R.anim.forward));
         mBinding.widget.speed.setVisibility(View.VISIBLE);
@@ -1240,6 +1263,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
 
     @Override
     public void onSpeedEnd() {
+        if (!mPlayers.isPlaying()) return;
         mBinding.control.action.speed.setText(mPlayers.setSpeed(mHistory.getSpeed()));
         mBinding.widget.speed.setVisibility(View.GONE);
         mBinding.widget.speed.clearAnimation();
@@ -1400,6 +1424,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
         super.onDestroy();
         mPlayers.release();
         Clock.get().release();
+        Source.get().destroy();
         RefreshEvent.history();
         PlaybackService.stop();
         App.removeCallbacks(mR1, mR2, mR3, mR4);

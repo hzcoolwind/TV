@@ -196,6 +196,14 @@ public class Prefers {
         put("across", across);
     }
 
+    public static boolean isChange() {
+        return getBoolean("change", true);
+    }
+
+    public static void putChange(boolean change) {
+        put("change", change);
+    }
+
     public static boolean getUpdate() {
         return getBoolean("update", true);
     }
@@ -226,6 +234,14 @@ public class Prefers {
 
     public static void putHttp(int http) {
         put("exo_http", http);
+    }
+
+    public static int getSiteMode() {
+        return getInt("site_mode");
+    }
+
+    public static void putSiteMode(int mode) {
+        put("site_mode", mode);
     }
 
     public static float getThumbnail() {

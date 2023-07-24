@@ -132,7 +132,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     public static void cast(Activity activity, History history) {
-        start(activity, history.getSiteKey(), history.getVodId(), history.getVodName(), true, true);
+        start(activity, history.getSiteKey(), history.getVodId(), history.getVodName(), history.getVodRemarks(), true);
     }
 
     public static void push(Activity activity, String url, boolean clear) {
@@ -147,15 +147,24 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         start(activity, key, id, name, false);
     }
 
-    public static void start(Activity activity, String key, String id, String name, boolean clear) {
-        start(activity, key, id, name, clear, false);
+    public static void start(Activity activity, String key, String id, String name, String mark) {
+        start(activity, key, id, name, mark, false);
     }
 
-    public static void start(Activity activity, String key, String id, String name, boolean clear, boolean cast) {
+    public static void start(Activity activity, String key, String id, String name, boolean clear) {
+        start(activity, key, id, name, null, clear, false);
+    }
+
+    public static void start(Activity activity, String key, String id, String name, String mark, boolean clear) {
+        start(activity, key, id, name, mark, clear, false);
+    }
+
+    public static void start(Activity activity, String key, String id, String name, String mark, boolean clear, boolean cast) {
         Intent intent = new Intent(activity, DetailActivity.class);
         if (clear) intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("cast", cast);
         intent.putExtra("name", name);
+        intent.putExtra("mark", mark);
         intent.putExtra("key", key);
         intent.putExtra("id", id);
         activity.startActivityForResult(intent, 1000);
@@ -167,6 +176,10 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
 
     private String getName() {
         return getIntent().getStringExtra("name");
+    }
+
+    private String getMark() {
+        return getIntent().getStringExtra("mark");
     }
 
     private String getKey() {
@@ -259,6 +272,8 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.control.text.setOnClickListener(this::onTrack);
         mBinding.control.audio.setOnClickListener(this::onTrack);
         mBinding.control.video.setOnClickListener(this::onTrack);
+        mBinding.control.speed.setAddListener(this::onSpeedAdd);
+        mBinding.control.speed.setSubListener(this::onSpeedSub);
         mBinding.control.ending.setAddListener(this::onEndingAdd);
         mBinding.control.ending.setSubListener(this::onEndingSub);
         mBinding.control.opening.setAddListener(this::onOpeningAdd);
@@ -320,7 +335,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.control.player.setText(mPlayers.getPlayerText());
         getExo().setVisibility(mPlayers.isExo() ? View.VISIBLE : View.GONE);
         getIjk().setVisibility(mPlayers.isIjk() ? View.VISIBLE : View.GONE);
-        getIjk().getOutSubtitleView().setVisibility(View.VISIBLE);
         mBinding.control.reset.setText(ResUtil.getStringArray(R.array.select_reset)[Prefers.getReset()]);
     }
 
@@ -331,10 +345,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     private void setVideoView() {
         mPlayers.set(getExo(), getIjk());
         getExo().getSubtitleView().setStyle(ExoUtil.getCaptionStyle());
-        getExo().getSubtitleView().setBottomPaddingFraction(0.05f);
-        getExo().getSubtitleView().setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         getIjk().getSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        getIjk().getOutSubtitleView().setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
     }
 
     private void setScale(int scale) {
@@ -377,7 +388,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mViewModel.result.observe(this, result -> {
             if (result.getList().isEmpty()) setEmpty();
             else setDetail(result.getList().get(0));
-            Notify.dismiss();
         });
     }
 
@@ -419,6 +429,8 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         } else if (getName().isEmpty()) {
             showEmpty();
         } else {
+            mBinding.name.setText(getName());
+            App.post(mR3, 10000);
             checkSearch(false);
             App.post(mR3, 10000);
         }
@@ -445,6 +457,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.content.setMaxLines(getMaxLines());
         mBinding.video.requestFocus();
         getPart(item.getVodName());
+        checkHistory(item);
         checkFlag(item);
         checkKeep();
     }
@@ -635,6 +648,16 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         return true;
     }
 
+    private void onSpeedAdd() {
+        mBinding.control.speed.setText(mPlayers.addSpeed(0.25f));
+        mHistory.setSpeed(mPlayers.getSpeed());
+    }
+
+    private void onSpeedSub() {
+        mBinding.control.speed.setText(mPlayers.subSpeed(0.25f));
+        mHistory.setSpeed(mPlayers.getSpeed());
+    }
+
     private void onRefresh() {
         onReset(false);
     }
@@ -805,16 +828,21 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     private void checkFlag(Vod item) {
-        mBinding.flag.setVisibility(item.getVodFlags().isEmpty() ? View.GONE : View.VISIBLE);
-        if (isVisible(mBinding.flag)) checkHistory(item);
-        else ErrorEvent.episode();
+        boolean empty = item.getVodFlags().isEmpty();
+        mBinding.flag.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) {
+            ErrorEvent.episode();
+        } else {
+            setFlagActivated(mHistory.getFlag(), true);
+            if (mHistory.isRevSort()) reverseEpisode(true);
+        }
     }
 
     private void checkHistory(Vod item) {
         mHistory = History.find(getHistoryKey());
         mHistory = mHistory == null ? createHistory(item) : mHistory;
-        setFlagActivated(mHistory.getFlag(), true);
-        if (mHistory.isRevSort()) reverseEpisode(true);
+        if (!TextUtils.isEmpty(getMark())) mHistory.setVodRemarks(getMark());
+        if (!getSite().isRecordable() && mHistory.getKey().equals(getHistoryKey())) mHistory.delete();
         mBinding.control.opening.setText(mHistory.getOpening() == 0 ? getString(R.string.play_op) : mPlayers.stringToTime(mHistory.getOpening()));
         mBinding.control.ending.setText(mHistory.getEnding() == 0 ? getString(R.string.play_ed) : mPlayers.stringToTime(mHistory.getEnding()));
         mBinding.control.speed.setText(mPlayers.setSpeed(mHistory.getSpeed()));
@@ -861,16 +889,17 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
 
     @Override
     public void onTrackClick(Track item) {
-        //item.setKey(getHistoryKey());
-        //item.save();
+        item.setKey(getHistoryKey());
+        item.save();
     }
 
     @Override
     public void onTimeChanged() {
-        long current = mPlayers.getPosition();
-        long duration = mPlayers.getDuration();
-        if (current >= 0 && duration > 0) App.execute(() -> mHistory.update(current, duration));
-        if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + current >= duration) {
+        long position, duration;
+        mHistory.setPosition(position = mPlayers.getPosition());
+        mHistory.setDuration(duration = mPlayers.getDuration());
+        if (position >= 0 && duration > 0 && getSite().isRecordable()) App.execute(() -> mHistory.update());
+        if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + position >= duration) {
             Clock.get().setCallback(null);
             checkNext();
         }
@@ -883,7 +912,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
                 setPosition();
                 setInitTrack(true);
                 setTrackVisible(false);
-                Clock.get().setCallback(this);
                 break;
             case Player.STATE_IDLE:
                 break;
@@ -929,7 +957,6 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
             setInitTrack(false);
             mPlayers.setTrack(Track.find(getHistoryKey()));
         }
-        //getIjk().getOutSubtitleView().setVisibility(View.VISIBLE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -989,7 +1016,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
     }
 
     private void checkSearch(boolean force) {
-        if (mSearchAdapter.size() == 0) initSearch(getName(), true);
+        if (mSearchAdapter.size() == 0) initSearch(mBinding.name.getText().toString(), true);
         else if (isAutoMode() || force) nextSite();
     }
 
@@ -1001,14 +1028,18 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mBinding.part.setTag(keyword);
     }
 
+    private boolean isPass(Site item) {
+        if (isAutoMode() && !item.isChangeable()) return false;
+        if (isAutoMode() && item.getKey().equals(getKey())) return false;
+        return item.isSearchable();
+    }
+
     private void startSearch(String keyword) {
         mSearchAdapter.clear();
+        List<Site> sites = new ArrayList<>();
         mExecutor = Executors.newFixedThreadPool(Constant.THREAD_POOL);
-        for (Site site : ApiConfig.get().getSites()) {
-            if (isAutoMode() && !site.isChangeable()) continue;
-            if (isAutoMode() && site.getKey().equals(getKey())) continue;
-            if (site.isSearchable()) mExecutor.execute(() -> search(site, keyword));
-        }
+        for (Site site : ApiConfig.get().getSites()) if (isPass(site)) sites.add(site);
+        for (Site site : sites) mExecutor.execute(() -> search(site, keyword));
     }
 
     private void stopSearch() {
@@ -1028,6 +1059,7 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mSearchAdapter.addAll(mSearchAdapter.size(), items);
         mBinding.search.setVisibility(View.VISIBLE);
         if (isInitAuto()) nextSite();
+        if (items.isEmpty()) return;
         App.removeCallbacks(mR3);
     }
 
@@ -1185,6 +1217,22 @@ public class DetailActivity extends BaseActivity implements CustomKeyDownVod.Lis
         mPlayers.seekTo(time);
         showProgress();
         onPlay();
+    }
+
+    @Override
+    public void onSpeedUp() {
+        if (!mPlayers.isPlaying()) return;
+        mBinding.control.speed.setText(mPlayers.setSpeed(mPlayers.getSpeed() < 3 ? 3 : 5));
+        mBinding.widget.speed.startAnimation(ResUtil.getAnim(R.anim.forward));
+        mBinding.widget.speed.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onSpeedEnd() {
+        if (!mPlayers.isPlaying()) return;
+        mBinding.control.speed.setText(mPlayers.setSpeed(mHistory.getSpeed()));
+        mBinding.widget.speed.setVisibility(View.GONE);
+        mBinding.widget.speed.clearAnimation();
     }
 
     @Override

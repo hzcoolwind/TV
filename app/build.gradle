@@ -21,12 +21,12 @@ android {
         leanback {
             dimension "mode"
             versionCode 203
-            versionName "基于FongMi的TV项目CW改版-20230711#1"
+            versionName "基于FongMi的TV项目CW改版-20230724#1"
         }
         mobile {
             dimension "mode"
             versionCode 203
-            versionName "基于FongMi的TV项目CW改版-20230711#1"
+            versionName "基于FongMi的TV项目CW改版-20230724#1"
         }
         java {
             dimension "api"
@@ -82,10 +82,10 @@ android {
 }
 
 dependencies {
-    implementation project(':drpy')
     implementation project(':tvbus')
-    implementation project(':zlive')
     implementation project(':catvod')
+    implementation project(':jianpian')
+    implementation project(':quickjs')
     implementation project(':jianpian')
     implementation project(':forcetech')
     implementation project(':ijkplayer')

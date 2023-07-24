@@ -23,7 +23,7 @@ public class PyLoader {
 
     public void clear() {
         for (Spider spider : spiders.values()) spider.destroy();
-        this.spiders.clear();
+        spiders.clear();
     }
 
     public void setRecent(String recent) {
@@ -51,12 +51,12 @@ public class PyLoader {
         }
     }
 
-    public Object[] proxyInvoke(Map<?, ?> params) {
+    public Object[] proxyInvoke(Map<String, String> params) {
         try {
             Spider spider = spiders.get(recent);
-            if (spider != null) return spider.proxyLocal(params);
-            else return null;
-        } catch (Exception e) {
+            if (spider == null) return null;
+            return spider.proxyLocal(params);
+        } catch (Throwable e) {
             e.printStackTrace();
             return null;
         }

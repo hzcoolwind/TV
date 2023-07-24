@@ -10,20 +10,18 @@ import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Rule;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.impl.Callback;
-import com.fongmi.android.tv.utils.Json;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.Utils;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderNull;
+import com.github.catvod.utils.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -233,8 +231,8 @@ public class ApiConfig {
         boolean js = site.getApi().contains(".js");
         boolean py = site.getApi().startsWith("py_");
         boolean csp = site.getApi().startsWith("csp_");
-        if (js) return jsLoader.getSpider(site.getKey(), site.getApi(), site.getExt());
-        else if (py) return pyLoader.getSpider(site.getKey(), site.getApi(), site.getExt());
+        if (py) return pyLoader.getSpider(site.getKey(), site.getApi(), site.getExt());
+        else if (js) return jsLoader.getSpider(site.getKey(), site.getApi(), site.getExt(), site.getJar());
         else if (csp) return jarLoader.getSpider(site.getKey(), site.getApi(), site.getExt(), site.getJar());
         else return new SpiderNull();
     }
@@ -244,14 +242,12 @@ public class ApiConfig {
         boolean py = site.getApi().startsWith("py_");
         boolean csp = site.getApi().startsWith("csp_");
         if (js) jsLoader.setRecent(site.getKey());
-        else if (py) pyLoader.setRecent(site.getJar());
+        else if (py) pyLoader.setRecent(site.getKey());
         else if (csp) jarLoader.setRecent(site.getJar());
     }
 
-    public Object[] proxyLocal(Map<?, ?> params) {
-        if (params.containsKey("do") && params.get("do").equals("port")) {
-            return new Object[]{200, "text/plain; charset=utf-8", new ByteArrayInputStream("ok".getBytes(StandardCharsets.UTF_8))};
-        } else if (params.containsKey("do") && params.get("do").equals("js")) {
+    public Object[] proxyLocal(Map<String, String> params) {
+        if (params.containsKey("do") && params.get("do").equals("js")) {
             return jsLoader.proxyInvoke(params);
         } else if (params.containsKey("do") && params.get("do").equals("py")) {
             return pyLoader.proxyInvoke(params);
@@ -260,11 +256,11 @@ public class ApiConfig {
         }
     }
 
-    public JSONObject jsonExt(String key, LinkedHashMap<String, String> jxs, String url) throws Exception {
+    public JSONObject jsonExt(String key, LinkedHashMap<String, String> jxs, String url) throws Throwable {
         return jarLoader.jsonExt(key, jxs, url);
     }
 
-    public JSONObject jsonExtMix(String flag, String key, String name, LinkedHashMap<String, HashMap<String, String>> jxs, String url) throws Exception {
+    public JSONObject jsonExtMix(String flag, String key, String name, LinkedHashMap<String, HashMap<String, String>> jxs, String url) throws Throwable {
         return jarLoader.jsonExtMix(flag, key, name, jxs, url);
     }
 
