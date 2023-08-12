@@ -21,7 +21,6 @@ package tv.danmaku.ijk.media.player;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.media.TimedText;
 import android.net.Uri;
@@ -230,12 +229,28 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
         return mMediaPlayer.getAudioSessionId();
     }
 
-    @Override
-    public int getSelectedTrack(int type) {
+
+
+
+    private int getTrack(int type) {
         try {
             return mMediaPlayer.getSelectedTrack(type);
         } catch (Exception e) {
-            return 0;
+            return -1;
+        }
+    }
+
+    @Override
+    public int getSelectedTrack(int type) {
+        switch (type) {
+            case ITrackInfo.MEDIA_TRACK_TYPE_VIDEO:
+                return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_VIDEO);
+            case ITrackInfo.MEDIA_TRACK_TYPE_AUDIO:
+                return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_AUDIO);
+            case ITrackInfo.MEDIA_TRACK_TYPE_TEXT:
+                return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
+            default:
+                return -1;
         }
     }
 
@@ -321,7 +336,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
 
     @Override
     public void onTimedText(MediaPlayer mp, TimedText text) {
-        //if (text != null) notifyOnTimedText(new IjkTimedText(text.getBounds(), text.getText()));
+        //if (text != null) notifyOnTimedText(IjkTimedText.create(text.getText()));
         Subtitle caption = new Subtitle();
         String[] dialogueFormat = new String[0];
         float timer = 100;
@@ -330,9 +345,9 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
         if (text != null){
             if (text.getText().startsWith("Dialogue:")){
                 caption =  new FormatASS().parseDialogueForASS(text.getText().split(":",2)[1].trim().split(",",10),dialogueFormat,timer, tto);
-                notifyOnTimedText(new IjkTimedText(new Rect(0, 0, 1, 1), caption.content));
+                notifyOnTimedText(new IjkTimedText(caption.content));
             } else {
-                notifyOnTimedText(new IjkTimedText(new Rect(0, 0, 1, 1), text.getText()));
+                notifyOnTimedText(new IjkTimedText(text.getText()));
             }
         }
     }

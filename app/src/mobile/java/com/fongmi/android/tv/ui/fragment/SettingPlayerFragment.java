@@ -9,19 +9,20 @@ import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.databinding.FragmentSettingPlayerBinding;
 import com.fongmi.android.tv.impl.UaCallback;
 import com.fongmi.android.tv.player.ExoUtil;
 import com.fongmi.android.tv.player.Players;
 import com.fongmi.android.tv.ui.base.BaseFragment;
 import com.fongmi.android.tv.ui.custom.dialog.UaDialog;
-import com.fongmi.android.tv.utils.Prefers;
 import com.fongmi.android.tv.utils.ResUtil;
 
 public class SettingPlayerFragment extends BaseFragment implements UaCallback {
 
     private FragmentSettingPlayerBinding mBinding;
     private String[] http;
+    private String[] flag;
 
     public static SettingPlayerFragment newInstance() {
         return new SettingPlayerFragment();
@@ -38,9 +39,10 @@ public class SettingPlayerFragment extends BaseFragment implements UaCallback {
 
     @Override
     protected void initView() {
-        mBinding.uaText.setText(Prefers.getUa());
-        mBinding.tunnelText.setText(getSwitch(Prefers.isTunnel()));
-        mBinding.httpText.setText((http = ResUtil.getStringArray(R.array.select_exo_http))[Prefers.getHttp()]);
+        mBinding.uaText.setText(Setting.getUa());
+        mBinding.tunnelText.setText(getSwitch(Setting.isTunnel()));
+        mBinding.flagText.setText((flag = ResUtil.getStringArray(R.array.select_flag))[Setting.getFlag()]);
+        mBinding.httpText.setText((http = ResUtil.getStringArray(R.array.select_exo_http))[Setting.getHttp()]);
         setVisible();
     }
 
@@ -48,12 +50,13 @@ public class SettingPlayerFragment extends BaseFragment implements UaCallback {
     protected void initEvent() {
         mBinding.ua.setOnClickListener(this::onUa);
         mBinding.http.setOnClickListener(this::setHttp);
+        mBinding.flag.setOnClickListener(this::setFlag);
         mBinding.tunnel.setOnClickListener(this::setTunnel);
     }
 
     private void setVisible() {
-        mBinding.http.setVisibility(Players.isExo(Prefers.getPlayer()) ? View.VISIBLE : View.GONE);
-        mBinding.tunnel.setVisibility(Players.isExo(Prefers.getPlayer()) ? View.VISIBLE : View.GONE);
+        mBinding.http.setVisibility(Players.isExo(Setting.getPlayer()) ? View.VISIBLE : View.GONE);
+        mBinding.tunnel.setVisibility(Players.isExo(Setting.getPlayer()) ? View.VISIBLE : View.GONE);
     }
 
     private void onUa(View view) {
@@ -61,21 +64,27 @@ public class SettingPlayerFragment extends BaseFragment implements UaCallback {
     }
 
     private void setHttp(View view) {
-        int index = Prefers.getHttp();
-        Prefers.putHttp(index = index == http.length - 1 ? 0 : ++index);
+        int index = Setting.getHttp();
+        Setting.putHttp(index = index == http.length - 1 ? 0 : ++index);
         mBinding.httpText.setText(http[index]);
         ExoUtil.reset();
     }
 
+    private void setFlag(View view) {
+        int index = Setting.getFlag();
+        Setting.putFlag(index = index == flag.length - 1 ? 0 : ++index);
+        mBinding.flagText.setText(flag[index]);
+    }
+
     private void setTunnel(View view) {
-        Prefers.putTunnel(!Prefers.isTunnel());
-        mBinding.tunnelText.setText(getSwitch(Prefers.isTunnel()));
+        Setting.putTunnel(!Setting.isTunnel());
+        mBinding.tunnelText.setText(getSwitch(Setting.isTunnel()));
     }
 
     @Override
     public void setUa(String ua) {
         mBinding.uaText.setText(ua);
-        Prefers.putUa(ua);
+        Setting.putUa(ua);
     }
 
     @Override

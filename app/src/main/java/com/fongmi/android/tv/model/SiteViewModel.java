@@ -14,14 +14,16 @@ import com.fongmi.android.tv.api.ApiConfig;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Vod;
+import com.fongmi.android.tv.exception.ExtractException;
 import com.fongmi.android.tv.player.Source;
+import com.fongmi.android.tv.player.extractor.Magnet;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Sniffer;
 import com.fongmi.android.tv.utils.Trans;
-import com.fongmi.android.tv.utils.Utils;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SiteViewModel extends ViewModel {
@@ -74,8 +77,7 @@ public class SiteViewModel extends ViewModel {
             } else {
                 String body = OkHttp.newCall(site.getApi()).execute().body().string();
                 SpiderDebug.log(body);
-                Result result = site.getType() == 0 ? Result.fromXml(body) : Result.fromJson(body);
-                return fetchPic(site, result);
+                return fetchPic(site, Result.fromType(site.getType(), body));
             }
         });
     }
@@ -92,13 +94,13 @@ public class SiteViewModel extends ViewModel {
             } else {
                 ArrayMap<String, String> params = new ArrayMap<>();
                 if (site.getType() == 1 && !extend.isEmpty()) params.put("f", App.gson().toJson(extend));
-                else if (site.getType() == 4) params.put("ext", Utils.getBase64(App.gson().toJson(extend)));
+                else if (site.getType() == 4) params.put("ext", Util.base64(App.gson().toJson(extend)));
                 params.put("ac", site.getType() == 0 ? "videolist" : "detail");
                 params.put("t", tid);
                 params.put("pg", page);
                 String body = OkHttp.newCall(site.getApi(), params).execute().body().string();
                 SpiderDebug.log(body);
-                return site.getType() == 0 ? Result.fromXml(body) : Result.fromJson(body);
+                return Result.fromType(site.getType(), body);
             }
         });
     }
@@ -113,6 +115,7 @@ public class SiteViewModel extends ViewModel {
                 ApiConfig.get().setRecent(site);
                 Result result = Result.fromJson(detailContent);
                 if (!result.getList().isEmpty()) result.getList().get(0).setVodFlags();
+                if (!result.getList().isEmpty()) checkThunder(result.getList().get(0).getVodFlags());
                 return result;
             } else if (key.equals("push_agent")) {
                 Vod vod = new Vod();
@@ -120,6 +123,7 @@ public class SiteViewModel extends ViewModel {
                 vod.setVodName(id);
                 vod.setVodPic("https://pic.rmb.bdstatic.com/bjh/1d0b02d0f57f0a42201f92caba5107ed.jpeg");
                 vod.setVodFlags(Vod.Flag.create(ResUtil.getString(R.string.push), ResUtil.getString(R.string.play), id));
+                checkThunder(vod.getVodFlags());
                 return Result.vod(vod);
             } else {
                 ArrayMap<String, String> params = new ArrayMap<>();
@@ -127,8 +131,9 @@ public class SiteViewModel extends ViewModel {
                 params.put("ids", id);
                 String body = OkHttp.newCall(site.getApi(), params).execute().body().string();
                 SpiderDebug.log(body);
-                Result result = site.getType() == 0 ? Result.fromXml(body) : Result.fromJson(body);
+                Result result = Result.fromType(site.getType(), body);
                 if (!result.getList().isEmpty()) result.getList().get(0).setVodFlags();
+                if (!result.getList().isEmpty()) checkThunder(result.getList().get(0).getVodFlags());
                 return result;
             }
         });
@@ -178,21 +183,41 @@ public class SiteViewModel extends ViewModel {
         });
     }
 
-    public void searchContent(Site site, String keyword) throws Throwable {
+    public void searchContent(Site site, String keyword, boolean quick) throws Throwable {
         if (site.getType() == 3) {
             Spider spider = ApiConfig.get().getCSP(site);
-            String searchContent = spider.searchContent(Trans.t2s(keyword), false);
+            String searchContent = spider.searchContent(Trans.t2s(keyword), quick);
             SpiderDebug.log(site.getName() + "," + searchContent);
             post(site, Result.fromJson(searchContent));
         } else {
             ArrayMap<String, String> params = new ArrayMap<>();
             params.put("wd", Trans.t2s(keyword));
-            if (site.getType() != 0) params.put("ac", "detail");
             String body = OkHttp.newCall(site.getApi(), params).execute().body().string();
             SpiderDebug.log(site.getName() + "," + body);
-            Result result = site.getType() == 0 ? Result.fromXml(body) : Result.fromJson(body);
-            post(site, fetchPic(site, result));
+            post(site, fetchPic(site, Result.fromType(site.getType(), body)));
         }
+    }
+
+    public void searchContent(Site site, String keyword, String page) {
+        execute(result, () -> {
+            if (site.getType() == 3) {
+                Spider spider = ApiConfig.get().getCSP(site);
+                String searchContent = spider.searchContent(Trans.t2s(keyword), false, page);
+                SpiderDebug.log(site.getName() + "," + searchContent);
+                Result result = Result.fromJson(searchContent);
+                for (Vod vod : result.getList()) vod.setSite(site);
+                return result;
+            } else {
+                ArrayMap<String, String> params = new ArrayMap<>();
+                params.put("wd", Trans.t2s(keyword));
+                params.put("pg", page);
+                String body = OkHttp.newCall(site.getApi(), params).execute().body().string();
+                SpiderDebug.log(site.getName() + "," + body);
+                Result result = fetchPic(site, Result.fromType(site.getType(), body));
+                for (Vod vod : result.getList()) vod.setSite(site);
+                return result;
+            }
+        });
     }
 
     private Result fetchPic(Site site, Result result) throws Exception {
@@ -203,9 +228,20 @@ public class SiteViewModel extends ViewModel {
         params.put("ac", site.getType() == 0 ? "videolist" : "detail");
         params.put("ids", TextUtils.join(",", ids));
         String body = OkHttp.newCall(site.getApi(), params).execute().body().string();
-        List<Vod> items = site.getType() == 0 ? Result.fromXml(body).getList() : Result.fromJson(body).getList();
-        result.setList(items);
+        result.setList(Result.fromType(site.getType(), body).getList());
         return result;
+    }
+
+    private void checkThunder(List<Vod.Flag> flags) throws Exception {
+        for (Vod.Flag flag : flags) {
+            List<Magnet> magnets = new ArrayList<>();
+            List<Vod.Flag.Episode> items = new ArrayList<>();
+            for (Vod.Flag.Episode episode : flag.getEpisodes()) if (Sniffer.isThunder(episode.getUrl())) magnets.add(Magnet.get(episode.getUrl()));
+            ExecutorService executor = Executors.newFixedThreadPool(Constant.THREAD_POOL * 2);
+            for (Future<List<Vod.Flag.Episode>> future : executor.invokeAll(magnets, 30, TimeUnit.SECONDS)) Magnet.addAll(items, future);
+            if (items.size() > 0) flag.createEpisode(items);
+            executor.shutdownNow();
+        }
     }
 
     private void post(Site site, Result result) {
@@ -223,7 +259,8 @@ public class SiteViewModel extends ViewModel {
                 result.postValue(executor.submit(callable).get(Constant.TIMEOUT_VOD, TimeUnit.MILLISECONDS));
             } catch (Throwable e) {
                 if (e instanceof InterruptedException || Thread.interrupted()) return;
-                result.postValue(Result.empty());
+                if (e.getCause() instanceof ExtractException) result.postValue(Result.error(e.getCause().getMessage()));
+                else result.postValue(Result.empty());
                 e.printStackTrace();
             }
         });

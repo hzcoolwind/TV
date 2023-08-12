@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.player.extractor;
 
 import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.api.LiveConfig;
 import com.fongmi.android.tv.bean.Core;
 import com.fongmi.android.tv.player.Source;
@@ -12,6 +13,7 @@ public class TVBus implements Source.Extractor, Listener {
 
     private TVCore tvcore;
     private String hls;
+    private Core core;
 
     @Override
     public boolean match(String scheme, String host) {
@@ -19,16 +21,18 @@ public class TVBus implements Source.Extractor, Listener {
     }
 
     private void init(Core core) {
-        tvcore = new TVCore();
+        App.get().setHook(true);
+        tvcore = new TVCore(core.getSo());
         tvcore.auth(core.getAuth()).broker(core.getBroker());
         tvcore.name(core.getName()).pass(core.getPass());
         tvcore.serv(0).play(8902).mode(1).listener(this);
-        tvcore.init(App.get());
+        tvcore.init();
     }
 
     @Override
     public String fetch(String url) throws Exception {
-        if (tvcore == null) init(LiveConfig.get().getHome().getCore());
+        if (core != null && !core.equals(LiveConfig.get().getHome().getCore())) change();
+        if (tvcore == null) init(core = LiveConfig.get().getHome().getCore());
         tvcore.start(url);
         onWait();
         return hls;
@@ -46,6 +50,11 @@ public class TVBus implements Source.Extractor, Listener {
         }
     }
 
+    private void change() {
+        App.post(() -> System.exit(0), 250);
+        Setting.putBootLive(true);
+    }
+
     @Override
     public void stop() {
         if (tvcore != null) tvcore.stop();
@@ -53,12 +62,8 @@ public class TVBus implements Source.Extractor, Listener {
     }
 
     @Override
-    public void destroy() {
-        stop();
-    }
-
-    @Override
-    public void release() {
+    public void exit() {
+        if (tvcore != null) tvcore.quit();
         tvcore = null;
     }
 

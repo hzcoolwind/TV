@@ -2,6 +2,7 @@ package tv.danmaku.ijk.media.player.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -10,9 +11,11 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.MediaController;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.avery.subtitle.model.Sub;
 import com.avery.subtitle.widget.SimpleSubtitleView;
@@ -75,6 +78,8 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private final SubtitleView mSubtitleView;
     private final AudioManager mAudioManager;
     private final FrameLayout mContentFrame;
+    private final ImageView mArtworkView;
+    private Drawable mDefaultArtwork;
     private IMediaPlayer mPlayer;
 
     private SimpleSubtitleView mOutSubtitleView;
@@ -95,9 +100,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         if (attrs != null) initAttr(context, attrs, defStyleAttr);
         mContentFrame = findViewById(R.id.ijk_content_frame);
         mSubtitleView = findViewById(R.id.ijk_subtitle);
-
         mOutSubtitleView = findViewById(R.id.subtitle_view);
 
+        mArtworkView = findViewById(R.id.ijk_artwork);
         mCurrentPlayer = PLAYER_NONE;
         mCurrentState = STATE_IDLE;
         mTargetState = STATE_IDLE;
@@ -107,6 +112,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private void initAttr(Context context, AttributeSet attrs, int defStyleAttr) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.IjkVideoView, defStyleAttr, 0);
         try {
+            mDefaultArtwork = context.getDrawable(a.getResourceId(R.styleable.IjkVideoView_default_artwork, 0));
             mKeepContentOnPlayerReset = a.getBoolean(R.styleable.IjkVideoView_keep_content_on_player_reset, mKeepContentOnPlayerReset);
         } finally {
             a.recycle();
@@ -376,10 +382,10 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
             ITrackInfo trackInfo = trackInfos.get(index);
             if (trackInfo.getTrackType() != type) continue;
             if (index == track && selected != track) {
-                long position = getCurrentPosition();
+                mOutSubtitleView.setText("");
                 mSubtitleView.setText("");
                 mPlayer.selectTrack(index);
-                if (position != 0) seekTo(position);
+                updateForCurrentTrackSelections();
             }
         }
     }
@@ -391,10 +397,10 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
             ITrackInfo trackInfo = trackInfos.get(index);
             if (trackInfo.getTrackType() != type) continue;
             if (index == track && selected == track) {
-                long position = getCurrentPosition();
+                mOutSubtitleView.setText("");
                 mSubtitleView.setText("");
                 mPlayer.deselectTrack(track);
-                if (position != 0) seekTo(position);
+                updateForCurrentTrackSelections();
             }
         }
     }
@@ -413,6 +419,34 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
                 break;
             }
         }
+    }
+
+    public void setDefaultArtwork(@Nullable Drawable defaultArtwork) {
+        if (this.mDefaultArtwork != defaultArtwork) {
+            this.mDefaultArtwork = defaultArtwork;
+            updateForCurrentTrackSelections();
+        }
+    }
+
+    private void updateForCurrentTrackSelections() {
+        if (mPlayer == null || mPlayer.getTrackInfo().isEmpty()) return;
+        int select = getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_VIDEO);
+        if (select >= 0) {
+            mArtworkView.setVisibility(GONE);
+            setRenderView(mCurrentRender);
+        } else {
+            removeRenderView();
+            setDrawableArtwork(mDefaultArtwork);
+        }
+    }
+
+    private void setDrawableArtwork(Drawable drawable) {
+        if (drawable == null) return;
+        int drawableWidth = drawable.getIntrinsicWidth();
+        int drawableHeight = drawable.getIntrinsicHeight();
+        if (drawableWidth == 0 || drawableHeight == 0) return;
+        mArtworkView.setImageDrawable(drawable);
+        mArtworkView.setVisibility(VISIBLE);
     }
 
     private void setOptions(Uri uri) {
@@ -471,6 +505,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         if (sub!=null)
             mOutSubtitleView.setSubtitlePath(sub.getUrl());
         mCurrentState = STATE_PREPARED;
+        updateForCurrentTrackSelections();
         if (mCurrentSpeed > 0) setSpeed(mCurrentSpeed);
         if (mStartPosition > 0) seekTo(mStartPosition);
         mListener.onPrepared(mPlayer);

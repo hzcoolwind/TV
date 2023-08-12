@@ -2,7 +2,6 @@ package com.fongmi.android.tv.player;
 
 import android.graphics.Color;
 import android.net.Uri;
-import android.util.Base64;
 
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
@@ -36,13 +35,15 @@ import androidx.media3.extractor.ts.TsExtractor;
 import androidx.media3.ui.CaptionStyleCompat;
 
 import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.Setting;
+import com.fongmi.android.tv.bean.Channel;
+import com.fongmi.android.tv.bean.Drm;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Sub;
-import com.fongmi.android.tv.utils.FileUtil;
-import com.fongmi.android.tv.utils.Prefers;
-import com.fongmi.android.tv.utils.Sniffer;
 import com.fongmi.android.tv.utils.Utils;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Path;
+import com.github.catvod.utils.Util;
 import com.google.common.net.HttpHeaders;
 
 import java.util.ArrayList;
@@ -66,12 +67,12 @@ public class ExoUtil {
 
     public static TrackSelector buildTrackSelector() {
         DefaultTrackSelector trackSelector = new DefaultTrackSelector(App.get());
-        trackSelector.setParameters(trackSelector.buildUponParameters().setPreferredTextLanguage("zh").setTunnelingEnabled(Prefers.isTunnel()));
+        trackSelector.setParameters(trackSelector.buildUponParameters().setPreferredTextLanguage("zh").setTunnelingEnabled(Setting.isTunnel()));
         return trackSelector;
     }
 
     public static RenderersFactory buildRenderersFactory() {
-        return new DefaultRenderersFactory(App.get()).setExtensionRendererMode(Math.abs(Prefers.getDecode() - 2));
+        return new DefaultRenderersFactory(App.get()).setExtensionRendererMode(Math.abs(Setting.getDecode() - 2));
     }
 
     public static CaptionStyleCompat getCaptionStyle() {
@@ -97,26 +98,30 @@ public class ExoUtil {
     }
 
     public static MediaSource getSource(Result result, int errorCode) {
-        return getSource(result.getHeaders(), result.getRealUrl(), result.getFormat(), result.getSubs(), errorCode);
+        return getSource(result.getHeaders(), result.getRealUrl(), result.getFormat(), result.getSubs(), null, errorCode);
+    }
+
+    public static MediaSource getSource(Channel channel, int errorCode) {
+        return getSource(channel.getHeaders(), channel.getUrl(), null, Collections.emptyList(), channel.getDrm(), errorCode);
     }
 
     public static MediaSource getSource(Map<String, String> headers, String url, int errorCode) {
-        return getSource(headers, url, null, Collections.emptyList(), errorCode);
+        return getSource(headers, url, null, Collections.emptyList(), null, errorCode);
     }
 
-    private static MediaSource getSource(Map<String, String> headers, String url, String format, List<Sub> subs, int errorCode) {
+    private static MediaSource getSource(Map<String, String> headers, String url, String format, List<Sub> subs, Drm drm, int errorCode) {
         Uri uri = Uri.parse(url.trim().replace("\\", ""));
         String mimeType = getMimeType(format, errorCode);
-        if (uri.getUserInfo() != null) headers.put(HttpHeaders.AUTHORIZATION, "Basic " + Base64.encodeToString(uri.getUserInfo().getBytes(), Base64.NO_WRAP));
-        return new DefaultMediaSourceFactory(getDataSourceFactory(headers), getExtractorsFactory()).createMediaSource(getMediaItem(uri, mimeType, subs));
+        if (uri.getUserInfo() != null) headers.put(HttpHeaders.AUTHORIZATION, "Basic " + Util.base64(uri.getUserInfo()));
+        return new DefaultMediaSourceFactory(getDataSourceFactory(headers), getExtractorsFactory()).createMediaSource(getMediaItem(uri, mimeType, subs, drm));
     }
 
-    private static MediaItem getMediaItem(Uri uri, String mimeType, List<Sub> subs) {
+    private static MediaItem getMediaItem(Uri uri, String mimeType, List<Sub> subs, Drm drm) {
         MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
         if (subs.size() > 0) builder.setSubtitleConfigurations(getSubtitles(subs));
         //builder.setAllowChunklessPreparation(Players.isHard());
         if (mimeType != null) builder.setMimeType(mimeType);
-        //builder.setAds(Sniffer.getAdsRegex(uri));
+        //builder.setAds(Sniffer.getRegex(uri));
         return builder.build();
     }
 
@@ -157,13 +162,13 @@ public class ExoUtil {
     }
 
     private static synchronized HttpDataSource.Factory getHttpDataSourceFactory() {
-        if (httpDataSourceFactory == null) httpDataSourceFactory = Prefers.getHttp() == 0 ? new DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true) : new OkHttpDataSource.Factory((Call.Factory) OkHttp.client());
+        if (httpDataSourceFactory == null) httpDataSourceFactory = Setting.getHttp() == 0 ? new DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true) : new OkHttpDataSource.Factory((Call.Factory) OkHttp.client());
         return httpDataSourceFactory;
     }
 
     private static synchronized DataSource.Factory getDataSourceFactory(Map<String, String> headers) {
         if (dataSourceFactory == null) dataSourceFactory = buildReadOnlyCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory()), getCache());
-        httpDataSourceFactory.setDefaultRequestProperties(Utils.checkHeaders(headers));
+        httpDataSourceFactory.setDefaultRequestProperties(Utils.checkUa(headers));
         return dataSourceFactory;
     }
 
@@ -177,7 +182,7 @@ public class ExoUtil {
     }
 
     private static synchronized Cache getCache() {
-        if (cache == null) cache = new SimpleCache(FileUtil.getCacheDir("player"), new NoOpCacheEvictor(), getDatabase());
+        if (cache == null) cache = new SimpleCache(Path.exo(), new NoOpCacheEvictor(), getDatabase());
         return cache;
     }
 

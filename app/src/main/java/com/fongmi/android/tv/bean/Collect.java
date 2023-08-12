@@ -11,11 +11,12 @@ public class Collect {
     private final Site site;
     private final List<Vod> list;
     private boolean activated;
+    private int page;
 
     public static Collect all() {
-        Collect all = new Collect(Site.get("all", ResUtil.getString(R.string.all)), new ArrayList<>());
-        all.setActivated(true);
-        return all;
+        Collect item = new Collect(Site.get("all", ResUtil.getString(R.string.all)), new ArrayList<>());
+        item.setActivated(true);
+        return item;
     }
 
     public static Collect create(List<Vod> list) {
@@ -41,5 +42,13 @@ public class Collect {
 
     public void setActivated(boolean activated) {
         this.activated = activated;
+    }
+
+    public int getPage() {
+        return Math.max(1, page);
+    }
+
+    public void setPage(int page) {
+        this.page = page;
     }
 }

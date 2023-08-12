@@ -9,11 +9,11 @@ import androidx.appcompat.app.AlertDialog;
 import com.fongmi.android.tv.databinding.DialogUpdateBinding;
 import com.fongmi.android.tv.utils.Download;
 import com.fongmi.android.tv.utils.FileUtil;
-import com.fongmi.android.tv.utils.Github;
 import com.fongmi.android.tv.utils.Notify;
-import com.fongmi.android.tv.utils.Prefers;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Github;
+import com.github.catvod.utils.Path;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONObject;
@@ -25,7 +25,7 @@ public class Updater implements Download.Callback {
 
     private DialogUpdateBinding binding;
     private AlertDialog dialog;
-    private String branch;
+    private boolean dev;
 
     private static class Loader {
         static volatile Updater INSTANCE = new Updater();
@@ -36,34 +36,30 @@ public class Updater implements Download.Callback {
     }
 
     private File getFile() {
-        return FileUtil.getCacheFile(branch + ".apk");
+        return Path.cache("update.apk");
     }
 
     private String getJson() {
-        return Github.get().getBranchPath(branch, "/myrelease/" + BuildConfig.FLAVOR_mode + ".json");
+        return Github.getJson(dev, BuildConfig.FLAVOR_mode);
     }
 
     private String getApk() {
-        return Github.get().getBranchPath(branch, "/myrelease/" + BuildConfig.FLAVOR_mode + "-" + BuildConfig.FLAVOR_api + "-" + BuildConfig.FLAVOR_abi + ".apk");
-    }
-
-    private Updater() {
-        this.branch = Github.RELEASE;
+        return Github.getApk(dev, BuildConfig.FLAVOR_mode + "-" + BuildConfig.FLAVOR_api + "-" + BuildConfig.FLAVOR_abi);
     }
 
     public Updater force() {
         Notify.show(R.string.update_check);
-        Prefers.putUpdate(true);
+        Setting.putUpdate(true);
         return this;
     }
 
     public Updater release() {
-        this.branch = Github.RELEASE;
+        this.dev = false;
         return this;
     }
 
     public Updater dev() {
-        this.branch = Github.DEV;
+        this.dev = true;
         return this;
     }
 
@@ -77,7 +73,7 @@ public class Updater implements Download.Callback {
     }
 
     private boolean need(int code, String name) {
-        return Prefers.getUpdate() && (branch.equals(Github.DEV) ? !name.equals(BuildConfig.VERSION_NAME) && code >= BuildConfig.VERSION_CODE : code > BuildConfig.VERSION_CODE);
+        return Setting.getUpdate() && (dev ? !name.equals(BuildConfig.VERSION_NAME) && code >= BuildConfig.VERSION_CODE : code > BuildConfig.VERSION_CODE);
     }
 
     private void doInBackground() {
@@ -106,7 +102,7 @@ public class Updater implements Download.Callback {
     }
 
     private void cancel(View view) {
-        Prefers.putUpdate(false);
+        Setting.putUpdate(false);
         dismiss();
     }
 

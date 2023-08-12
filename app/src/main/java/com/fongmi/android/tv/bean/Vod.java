@@ -4,7 +4,9 @@ import android.text.TextUtils;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.fongmi.android.tv.ui.base.ViewType;
 import com.fongmi.android.tv.utils.Trans;
 import com.fongmi.android.tv.utils.Utils;
 import com.google.gson.Gson;
@@ -20,8 +22,8 @@ import org.simpleframework.xml.Text;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -76,6 +78,9 @@ public class Vod {
 
     @SerializedName("vod_tag")
     private String vodTag;
+
+    @SerializedName("style")
+    private Style style;
 
     @Path("dl")
     @ElementList(entry = "dd", required = false, inline = true)
@@ -153,6 +158,10 @@ public class Vod {
         return TextUtils.isEmpty(vodTag) ? "" : vodTag;
     }
 
+    public Style getStyle() {
+        return style;
+    }
+
     public List<Flag> getVodFlags() {
         return vodFlags = vodFlags == null ? new ArrayList<>() : vodFlags;
     }
@@ -193,6 +202,14 @@ public class Vod {
         return getVodTag().equals("folder");
     }
 
+    public boolean isComic() {
+        return getVodTag().equals("comic");
+    }
+
+    public Style getStyle(Style style) {
+        return getStyle() == null ? style : getStyle();
+    }
+
     public String getVodName(String name) {
         if (getVodName().isEmpty()) setVodName(name);
         return getVodName();
@@ -224,6 +241,14 @@ public class Vod {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Vod)) return false;
+        Vod it = (Vod) obj;
+        return getVodId().equals(it.getVodId());
+    }
+
     public static class Flag {
 
         @Attribute(name = "flag", required = false)
@@ -242,6 +267,7 @@ public class Vod {
 
         public Flag() {
             this.episodes = new ArrayList<>();
+            this.position = -1;
         }
 
         public Flag(String flag) {
@@ -289,9 +315,14 @@ public class Vod {
             for (int i = 0; i < urls.length; i++) {
                 String[] split = urls[i].split("\\$");
                 String number = String.format(Locale.getDefault(), "%02d", i + 1);
-                Episode episode = split.length > 1 ? new Vod.Flag.Episode(split[0].isEmpty() ? number : split[0].trim(), split[1]) : new Vod.Flag.Episode(number, urls[i]);
+                Episode episode = split.length > 1 ? Episode.create(split[0].isEmpty() ? number : split[0].trim(), split[1]) : Episode.create(number, urls[i]);
                 if (!getEpisodes().contains(episode)) getEpisodes().add(episode);
             }
+        }
+
+        public void createEpisode(List<Episode> items) {
+            getEpisodes().clear();
+            getEpisodes().addAll(items);
         }
 
         public void toggle(boolean activated, Episode episode) {
@@ -304,20 +335,22 @@ public class Vod {
             for (int i = 0; i < getEpisodes().size(); i++) getEpisodes().get(i).setActivated(i == getPosition());
         }
 
-        public Episode find(String remarks) {
+        public Episode find(String remarks, boolean strict) {
             int number = Utils.getDigit(remarks);
+            if (getEpisodes().size() == 0) return null;
             if (getEpisodes().size() == 1) return getEpisodes().get(0);
-            for (Vod.Flag.Episode item : getEpisodes()) if (item.rule1(remarks)) return item;
-            for (Vod.Flag.Episode item : getEpisodes()) if (item.rule2(number)) return item;
-            for (Vod.Flag.Episode item : getEpisodes()) if (item.rule3(remarks)) return item;
-            for (Vod.Flag.Episode item : getEpisodes()) if (item.rule4(remarks)) return item;
-            return getPosition() != -1 ? getEpisodes().get(getPosition()) : null;
+            for (Episode item : getEpisodes()) if (item.rule1(remarks)) return item;
+            for (Episode item : getEpisodes()) if (item.rule2(number)) return item;
+            for (Episode item : getEpisodes()) if (item.rule3(remarks)) return item;
+            for (Episode item : getEpisodes()) if (item.rule4(remarks)) return item;
+            if (getPosition() != -1) return getEpisodes().get(getPosition());
+            return strict ? null : getEpisodes().get(0);
         }
 
         public static List<Flag> create(String flag, String name, String url) {
             Vod.Flag item = new Vod.Flag(flag);
-            item.getEpisodes().add(new Vod.Flag.Episode(name, url));
-            return Arrays.asList(item);
+            item.getEpisodes().add(Episode.create(name, url));
+            return List.of(item);
         }
 
         @Override
@@ -337,13 +370,16 @@ public class Vod {
         public static class Episode {
 
             @SerializedName("name")
-            private final String name;
+            private String name;
             @SerializedName("url")
-            private final String url;
+            private String url;
 
             private final int number;
-
             private boolean activated;
+
+            public static Episode create(String name, String url) {
+                return new Episode(name, url);
+            }
 
             public static Episode objectFrom(String str) {
                 return new Gson().fromJson(str, Episode.class);
@@ -363,6 +399,10 @@ public class Vod {
 
             public String getName() {
                 return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
             }
 
             public String getUrl() {
@@ -401,13 +441,104 @@ public class Vod {
                 return name.toLowerCase().contains(getName().toLowerCase());
             }
 
+            public boolean equals(Episode episode) {
+                return rule1(episode.getName());
+            }
+
             @Override
             public boolean equals(Object obj) {
                 if (this == obj) return true;
                 if (!(obj instanceof Episode)) return false;
                 Episode it = (Episode) obj;
-                return getUrl().equals(it.getUrl()) || getName().equals(it.getName());
+                return getUrl().equals(it.getUrl()) && getName().equals(it.getName());
             }
+
+            public static class Sorter implements Comparator<Episode> {
+
+                public static List<Episode> sort(List<Episode> items) {
+                    if (items.size() > 1) Collections.sort(items, new Sorter());
+                    return items;
+                }
+
+                @Override
+                public int compare(Episode o1, Episode o2) {
+                    return Integer.compare(o1.getNumber(), o2.getNumber());
+                }
+            }
+        }
+    }
+
+    public static class Style {
+
+        @SerializedName("type")
+        private final String type;
+        @SerializedName("ratio")
+        private Float ratio;
+
+        public static Style rect() {
+            return new Style("rect", 0.75f);
+        }
+
+        public static Style list() {
+            return new Style("list");
+        }
+
+        public Style(String type) {
+            this.type = type;
+        }
+
+        public Style(String type, Float ratio) {
+            this.type = type;
+            this.ratio = ratio;
+        }
+
+        public String getType() {
+            return TextUtils.isEmpty(type) ? "rect" : type;
+        }
+
+        public Float getRatio() {
+            return ratio == null || ratio <= 0 ? (isOval() ? 1.0f : 0.75f) : Math.min(4, ratio);
+        }
+
+        public boolean isRect() {
+            return getType().equals("rect");
+        }
+
+        public boolean isOval() {
+            return getType().equals("oval");
+        }
+
+        public boolean isFull() {
+            return getType().equals("full");
+        }
+
+        public boolean isList() {
+            return getType().equals("list");
+        }
+
+        public boolean isLand() {
+            return isRect() && getRatio() > 1.0f;
+        }
+
+        public int getViewType() {
+            switch (getType()) {
+                case "oval":
+                    return ViewType.OVAL;
+                case "full":
+                    return ViewType.FULL;
+                case "list":
+                    return ViewType.LIST;
+                default:
+                    return ViewType.RECT;
+            }
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            if (this == obj) return true;
+            if (!(obj instanceof Style)) return false;
+            Style it = (Style) obj;
+            return getType().equals(it.getType()) && getRatio().equals(it.getRatio());
         }
     }
 }

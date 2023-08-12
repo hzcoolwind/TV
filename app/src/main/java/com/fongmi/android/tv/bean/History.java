@@ -65,8 +65,7 @@ public class History {
     }
 
     public static List<History> arrayFrom(String str) {
-        Type listType = new TypeToken<List<History>>() {
-        }.getType();
+        Type listType = new TypeToken<List<History>>() {}.getType();
         List<History> items = new Gson().fromJson(str, listType);
         return items == null ? Collections.emptyList() : items;
     }
@@ -250,6 +249,10 @@ public class History {
         return isRevPlay() ? R.string.play_backward_hint : R.string.play_forward_hint;
     }
 
+    public boolean isNew() {
+        return getCreateTime() == 0 && getPosition() == 0;
+    }
+
     public static List<History> get() {
         return get(ApiConfig.getCid());
     }
@@ -320,7 +323,7 @@ public class History {
         for (History item : find()) {
             if (getPosition() > 0) break;
             for (Vod.Flag flag : flags) {
-                Vod.Flag.Episode episode = flag.find(item.getVodRemarks());
+                Vod.Flag.Episode episode = flag.find(item.getVodRemarks(), true);
                 if (episode == null) continue;
                 setVodFlag(flag.getFlag());
                 setPosition(item.getPosition());

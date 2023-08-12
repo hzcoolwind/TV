@@ -1,17 +1,16 @@
 package com.fongmi.android.tv.player;
 
-import android.net.Uri;
-
 import com.fongmi.android.tv.player.extractor.BiliBili;
 import com.fongmi.android.tv.player.extractor.Force;
 import com.fongmi.android.tv.player.extractor.JianPian;
 import com.fongmi.android.tv.player.extractor.TVBus;
+import com.fongmi.android.tv.player.extractor.Thunder;
 import com.fongmi.android.tv.player.extractor.Youtube;
 import com.fongmi.android.tv.player.extractor.ZLive;
+import com.github.catvod.utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class Source {
 
@@ -30,16 +29,16 @@ public class Source {
         extractors.add(new BiliBili());
         extractors.add(new Force());
         extractors.add(new JianPian());
+        extractors.add(new Thunder());
         extractors.add(new TVBus());
         extractors.add(new Youtube());
         extractors.add(new ZLive());
     }
 
     public String fetch(String url) throws Exception {
-        Uri uri = Uri.parse(url);
-        String host = Objects.requireNonNullElse(uri.getHost(), "");
-        String scheme = Objects.requireNonNullElse(uri.getScheme(), "");
-        for (Extractor extractor : extractors) if (extractor.match(scheme, host)) return extractor.fetch(url);
+        String host = Util.host(url);
+        String scheme = Util.scheme(url);
+        for (Extractor extractor : extractors) if (extractor.match(scheme, host)) return extractor.fetch(url.trim());
         return url;
     }
 
@@ -48,14 +47,9 @@ public class Source {
         for (Extractor extractor : extractors) extractor.stop();
     }
 
-    public void destroy() {
+    public void exit() {
         if (extractors == null) return;
-        for (Extractor extractor : extractors) extractor.destroy();
-    }
-
-    public void release() {
-        if (extractors == null) return;
-        for (Extractor extractor : extractors) extractor.release();
+        for (Extractor extractor : extractors) extractor.exit();
     }
 
     public interface Extractor {
@@ -66,8 +60,6 @@ public class Source {
 
         void stop();
 
-        void destroy();
-
-        void release();
+        void exit();
     }
 }

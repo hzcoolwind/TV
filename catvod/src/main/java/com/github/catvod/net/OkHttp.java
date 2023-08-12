@@ -1,11 +1,10 @@
 package com.github.catvod.net;
 
-import android.content.Context;
 import android.util.ArrayMap;
 
 import com.github.catvod.bean.Doh;
+import com.github.catvod.utils.Path;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +21,7 @@ import okhttp3.dnsoverhttps.DnsOverHttps;
 
 public class OkHttp {
 
-    public static final int TIMEOUT = 30 * 1000;
+    private static final int TIMEOUT = 30 * 1000;
     private static final int CACHE = 50 * 1024 * 1024;
 
     private DnsOverHttps dns;
@@ -37,8 +36,8 @@ public class OkHttp {
         return Loader.INSTANCE;
     }
 
-    public void setDoh(Context context, Doh doh) {
-        OkHttpClient dohClient = new OkHttpClient.Builder().cache(new Cache(new File(context.getCacheDir(), "http_cache"), CACHE)).hostnameVerifier(SSLSocketFactoryCompat.hostnameVerifier).sslSocketFactory(new SSLSocketFactoryCompat(), SSLSocketFactoryCompat.trustAllCert).build();
+    public void setDoh(Doh doh) {
+        OkHttpClient dohClient = new OkHttpClient.Builder().cache(new Cache(Path.doh(), CACHE)).hostnameVerifier(SSLCompat.VERIFIER).sslSocketFactory(new SSLCompat(), SSLCompat.TM).build();
         dns = doh.getUrl().isEmpty() ? null : new DnsOverHttps.Builder().client(dohClient).url(HttpUrl.get(doh.getUrl())).bootstrapDnsHosts(doh.getHosts()).build();
         client = null;
         noRedirect = null;
@@ -59,7 +58,7 @@ public class OkHttp {
     }
 
     public static OkHttpClient client(int timeout) {
-        return new OkHttpClient.Builder().connectTimeout(timeout, TimeUnit.MILLISECONDS).readTimeout(timeout, TimeUnit.MILLISECONDS).writeTimeout(timeout, TimeUnit.MILLISECONDS).dns(dns()).hostnameVerifier(SSLSocketFactoryCompat.hostnameVerifier).sslSocketFactory(new SSLSocketFactoryCompat(), SSLSocketFactoryCompat.trustAllCert).build();
+        return new OkHttpClient.Builder().connectTimeout(timeout, TimeUnit.MILLISECONDS).readTimeout(timeout, TimeUnit.MILLISECONDS).writeTimeout(timeout, TimeUnit.MILLISECONDS).dns(dns()).hostnameVerifier(SSLCompat.VERIFIER).sslSocketFactory(new SSLCompat(), SSLCompat.TM).build();
     }
 
     public static Call newCall(String url) {

@@ -8,12 +8,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <ImageView
+            android:id="@+id/ijk_artwork"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
         <tv.danmaku.ijk.media.player.ui.SubtitleView
             android:id="@+id/ijk_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:layout_margin="8dp"
+            android:layout_margin="16dp"
             android:gravity="center"
             android:textStyle="bold" />
 

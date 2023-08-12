@@ -49,7 +49,7 @@ public class MainActivity extends BaseActivity implements NavigationBarView.OnIt
     @Override
     protected void initView(Bundle savedInstanceState) {
         initFragment(savedInstanceState);
-        Updater.get().dev().start();
+        Updater.get().release().start();
         Server.get().start();
         initConfig();
     }
@@ -118,7 +118,7 @@ public class MainActivity extends BaseActivity implements NavigationBarView.OnIt
     private void setConfirm() {
         confirm = true;
         Notify.show(R.string.app_exit);
-        App.post(() -> confirm = false, 2000);
+        App.post(() -> confirm = false, 5000);
     }
 
     public void change(int position) {
@@ -166,7 +166,7 @@ public class MainActivity extends BaseActivity implements NavigationBarView.OnIt
         WallConfig.get().clear();
         LiveConfig.get().clear();
         ApiConfig.get().clear();
-        Source.get().release();
+        Source.get().exit();
         Server.get().stop();
     }
 }

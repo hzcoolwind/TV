@@ -80,7 +80,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void initView() {
         mBinding.progressLayout.showProgress();
-        Updater.get().dev().start();
+        Updater.get().release().start();
         Server.get().start();
         setRecyclerView();
         setViewModel();
@@ -229,7 +229,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void setConfirm() {
         confirm = true;
         Notify.show(R.string.app_exit);
-        App.post(() -> confirm = false, 2000);
+        App.post(() -> confirm = false, 5000);
     }
 
     @Override
@@ -258,14 +258,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public void onItemClick(Vod item) {
-        //DetailActivity.start(this, item.getVodId(), item.getVodName());
-        CollectActivity.start(this, item.getVodName());
+        DetailActivity.start(this, item.getVodId(), item.getVodName());
     }
 
     @Override
     public boolean onLongClick(Vod item) {
-        //CollectActivity.start(this, item.getVodName());
-        DetailActivity.start(this, item.getVodId(), item.getVodName());
+        CollectActivity.start(this, item.getVodName());
         return true;
     }
 
@@ -400,7 +398,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         WallConfig.get().clear();
         LiveConfig.get().clear();
         ApiConfig.get().clear();
-        Source.get().release();
         Server.get().stop();
+        Source.get().exit();
     }
 }

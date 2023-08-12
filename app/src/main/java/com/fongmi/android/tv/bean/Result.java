@@ -1,7 +1,6 @@
 package com.fongmi.android.tv.bean;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -60,6 +59,11 @@ public class Result {
     private String key;
     @SerializedName("subs")
     private List<Sub> subs;
+    @SerializedName("pagecount")
+    private int pagecount;
+
+    private boolean error;
+    private String msg;
 
     public static Result fromJson(String str) {
         try {
@@ -78,10 +82,6 @@ public class Result {
         }
     }
 
-    public static Result fromObject(JSONObject object) {
-        return object == null ? empty() : objectFrom(object.toString());
-    }
-
     public static Result objectFrom(String str) {
         try {
             return new Gson().fromJson(str, Result.class);
@@ -90,8 +90,23 @@ public class Result {
         }
     }
 
+    public static Result fromType(int type, String str) {
+        return type == 0 ? fromXml(str) : fromJson(str);
+    }
+
+    public static Result fromObject(JSONObject object) {
+        return object == null ? empty() : objectFrom(object.toString());
+    }
+
     public static Result empty() {
         return new Result();
+    }
+
+    public static Result error(String msg) {
+        Result result = new Result();
+        result.setError(true);
+        result.setMsg(msg);
+        return result;
     }
 
     public static Result folder(Vod item) {
@@ -204,6 +219,26 @@ public class Result {
 
     public void setSubs(List<Sub> list) {
         this.subs = list;
+    }
+
+    public int getPageCount() {
+        return pagecount;
+    }
+
+    public boolean isError() {
+        return error;
+    }
+
+    public void setError(boolean error) {
+        this.error = error;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 
     public String getRealUrl() {

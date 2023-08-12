@@ -130,7 +130,7 @@ public class CollectActivity extends BaseActivity {
 
     private void search(Site site) {
         try {
-            mViewModel.searchContent(site, getKeyword());
+            mViewModel.searchContent(site, getKeyword(), false);
         } catch (Throwable ignored) {
         }
     }
@@ -189,7 +189,7 @@ public class CollectActivity extends BaseActivity {
         @NonNull
         @Override
         public Fragment getItem(int position) {
-            return CollectFragment.newInstance(((Collect) mAdapter.get(position)).getList());
+            return CollectFragment.newInstance(getKeyword(), (Collect) mAdapter.get(position));
         }
 
         @Override
