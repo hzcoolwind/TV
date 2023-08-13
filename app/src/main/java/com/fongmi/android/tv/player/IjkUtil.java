@@ -30,8 +30,10 @@ public class IjkUtil {
         Uri uri = Uri.parse(url.trim().replace("\\", ""));
         if (Sniffer.isAds(uri)) uri = Uri.parse(Server.get().getAddress().concat("/m3u8?url=").concat(URLEncoder.encode(url)));
         List<Sub> ijksubs = new ArrayList<Sub>();
-        for (com.fongmi.android.tv.bean.Sub sub:subs) {
-            ijksubs.add(new com.avery.subtitle.model.Sub(sub.getUrl(), sub.getName(), sub.getLang(), sub.getFormat()));
+        if (subs!=null){
+            for (com.fongmi.android.tv.bean.Sub sub : subs) {
+                ijksubs.add(new com.avery.subtitle.model.Sub(sub.getUrl(), sub.getName(), sub.getLang(), sub.getFormat()));
+            }
         }
         return new MediaSource(Utils.checkUa(headers), uri, ijksubs);
     }
