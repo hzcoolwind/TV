@@ -151,6 +151,7 @@ public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListe
 
     @Override
     public void onSuccess(String result) {
+        DLNACastManager.getInstance().play();
         listener.onCastTo();
         dismiss();
     }

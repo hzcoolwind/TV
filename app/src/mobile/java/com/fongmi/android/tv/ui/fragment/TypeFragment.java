@@ -111,13 +111,11 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     private void setRecyclerView() {
         mBinding.recycler.setHasFixedSize(true);
-        mBinding.recycler.setAdapter(mAdapter = new VodAdapter(this));
         setStyle(getStyle());
     }
 
     private void setStyle(Vod.Style style) {
-        mAdapter.setStyle(style);
-        mAdapter.setSize(Product.getSpec(getActivity(), style));
+        mBinding.recycler.setAdapter(mAdapter = new VodAdapter(this, style, Product.getSpec(getActivity(), style)));
         mBinding.recycler.setLayoutManager(mAdapter.isLinear() ? new LinearLayoutManager(getActivity()) : new GridLayoutManager(getContext(), Product.getColumn(style)));
     }
 
@@ -140,7 +138,7 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     private void setAdapter(Result result) {
         int size = result.getList().size();
-        mBinding.progressLayout.showContent(isFolder(), size);
+        mBinding.progressLayout.showContent(mScroller.first(), size);
         mBinding.swipeLayout.setRefreshing(false);
         mScroller.endLoading(result);
         addVideo(result.getList());
@@ -157,12 +155,12 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     private void checkPosition() {
         if (mPage != null) scrollToPosition(mPage.getPosition());
-        else if (isFolder()) mBinding.recycler.scrollToPosition(0);
+        else if (mScroller.first()) mBinding.recycler.scrollToPosition(0);
         mPage = null;
     }
 
     private void checkPage(int count) {
-        if (mScroller.isDisable() || count == 0 || mAdapter.getItemCount() >= 40 || isFolder() || isHome()) return;
+        if (mScroller.isDisable() || count == 0 || mAdapter.getItemCount() >= 40 || isHome()) return;
         getVideo(getTypeId(), String.valueOf(mScroller.addPage()));
     }
 
@@ -196,7 +194,7 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     @Override
     public void onLoadMore(String page) {
-        if (isFolder() || isHome()) return;
+        if (isHome()) return;
         mScroller.setLoading(true);
         getVideo(getTypeId(), page);
     }
