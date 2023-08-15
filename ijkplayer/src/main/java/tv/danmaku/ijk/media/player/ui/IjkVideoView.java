@@ -551,9 +551,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
             if (text.getText().startsWith("Dialogue:")) {
                 caption = new FormatASS().parseDialogueForASS(text.getText().split(":", 2)[1].trim().split(",", 10), dialogueFormat, timer, tto);
                 mSubtitleView.onSubtitleChanged(caption.content);
-            } if (text.getText().length()>200){
+            } else if (text.getText().length()>200){
 
-            }  else {
+            } else {
                 mSubtitleView.onSubtitleChanged(text.getText());
             }
         }
