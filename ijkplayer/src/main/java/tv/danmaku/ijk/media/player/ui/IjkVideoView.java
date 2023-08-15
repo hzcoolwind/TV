@@ -17,7 +17,10 @@ import android.widget.MediaController;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.avery.subtitle.format.FormatASS;
 import com.avery.subtitle.model.Sub;
+import com.avery.subtitle.model.Subtitle;
+import com.avery.subtitle.model.TimedTextObject;
 import com.avery.subtitle.widget.SimpleSubtitleView;
 
 import java.util.List;
@@ -539,7 +542,21 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
     @Override
     public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
-        mSubtitleView.onSubtitleChanged(text.getText());
+        Subtitle caption;
+        String[] dialogueFormat = new String[0];
+        float timer = 100;
+        TimedTextObject tto = new TimedTextObject();
+
+        if (text != null) {
+            if (text.getText().startsWith("Dialogue:")) {
+                caption = new FormatASS().parseDialogueForASS(text.getText().split(":", 2)[1].trim().split(",", 10), dialogueFormat, timer, tto);
+                mSubtitleView.onSubtitleChanged(caption.content);
+            } if (text.getText().length()>200){
+
+            }  else {
+                mSubtitleView.onSubtitleChanged(text.getText());
+            }
+        }
     }
 
     @Override

@@ -337,7 +337,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
     @Override
     public void onTimedText(MediaPlayer mp, TimedText text) {
         //if (text != null) notifyOnTimedText(IjkTimedText.create(text.getText()));
-        Subtitle caption = new Subtitle();
+        Subtitle caption;
         String[] dialogueFormat = new String[0];
         float timer = 100;
         TimedTextObject tto = new TimedTextObject();
@@ -346,6 +346,8 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
             if (text.getText().startsWith("Dialogue:")){
                 caption =  new FormatASS().parseDialogueForASS(text.getText().split(":",2)[1].trim().split(",",10),dialogueFormat,timer, tto);
                 notifyOnTimedText(new IjkTimedText(caption.content));
+            } else if (text.getText().length()>200){
+
             } else {
                 notifyOnTimedText(new IjkTimedText(text.getText()));
             }
