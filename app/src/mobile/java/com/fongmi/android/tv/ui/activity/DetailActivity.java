@@ -1047,7 +1047,7 @@ public class DetailActivity extends BaseActivity implements Clock.Callback, Cust
     private void setDefaultTrack() {
         if (isInitTrack()) {
             setInitTrack(false);
-            mPlayers.setTrack(Track.find(getHistoryKey()));
+            //mPlayers.setTrack(Track.find(getHistoryKey()));
         }
     }
 

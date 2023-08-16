@@ -421,7 +421,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
             ITrackInfo trackInfo = trackInfos.get(index);
             if (trackInfo.getTrackType() != ITrackInfo.MEDIA_TRACK_TYPE_TEXT) continue;
             if (trackInfo.getLanguage().equals("zh") && index != selected) {
-                //mPlayer.selectTrack(index);
+//                mPlayer.selectTrack(index);
                 break;
             }
         }
