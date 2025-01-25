@@ -3,13 +3,21 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('/Users/tanggm/Projects/AndroidProjects/SignNewKey')
+            storePassword 'tgmtyy'
+            keyAlias 'key0'
+            keyPassword 'tgmtyy'
+        }
+    }
     namespace 'com.fongmi.android.tv'
 
     compileSdk 35
     flavorDimensions = ["mode", "api", "abi"]
 
     defaultConfig {
-        applicationId "com.fongmi.android.tv"
+        applicationId "com.fongmi.android.mytv"
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 28
@@ -20,6 +28,7 @@ android {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.fongmi.android.tv.event.EventIndex"]
             }
         }
+        signingConfig signingConfigs.debug
     }
 
     productFlavors {
