@@ -5,7 +5,7 @@ plugins {
 android {
     signingConfigs {
         debug {
-            storeFile file('/Users/tanggm/Projects/AndroidProjects/SignNewKey')
+            storeFile file('../../SignNewKey')
             storePassword 'tgmtyy'
             keyAlias 'key0'
             keyPassword 'tgmtyy'
