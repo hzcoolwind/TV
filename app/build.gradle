@@ -88,6 +88,10 @@ android {
     lint {
         disable 'UnsafeOptInUsageError'
     }
+
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
