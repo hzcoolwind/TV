@@ -26,7 +26,7 @@ import java.util.List;
 
 public class AndroidTrackInfo implements ITrackInfo {
 
-    private final MediaPlayer.TrackInfo mTrackInfo;
+    private MediaPlayer.TrackInfo mTrackInfo = null;
     private int mTrackType = MEDIA_TRACK_TYPE_UNKNOWN;
 
     public static List<ITrackInfo> fromMediaPlayer(MediaPlayer mp) {
@@ -41,7 +41,8 @@ public class AndroidTrackInfo implements ITrackInfo {
     }
 
     private AndroidTrackInfo(MediaPlayer.TrackInfo trackInfo) {
-        initTrackType(mTrackInfo = trackInfo);
+        mTrackInfo = trackInfo;
+        initTrackType(mTrackInfo);
     }
 
     private void initTrackType(MediaPlayer.TrackInfo trackInfo) {

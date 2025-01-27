@@ -81,6 +81,10 @@ public class Setting {
         Prefers.put("render", render);
     }
 
+    public static int getPlayer() { return Prefers.getInt("player", Players.EXO); }
+    public static void putPlayer(int player) { Prefers.put("player", player); }
+    public static int getLivePlayer() { return Prefers.getInt("player_live", getPlayer()); }
+    public static void putLivePlayer(int player) { Prefers.put("player_live", player);}
     public static int getQuality() {
         return Prefers.getInt("quality", 2);
     }
