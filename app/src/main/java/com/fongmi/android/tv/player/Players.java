@@ -297,6 +297,10 @@ public class Players implements Player.Listener, IMediaPlayer.Listener, ParseCal
         return String.format(Locale.getDefault(), "%.2f", getSpeed());
     }
 
+    public String getPlayerText() {
+        return ResUtil.getStringArray(R.array.select_player)[playerId];
+    }
+
     public String getDecodeText() {
         return ResUtil.getStringArray(R.array.select_decode)[decode];
     }
@@ -474,7 +478,7 @@ public class Players implements Player.Listener, IMediaPlayer.Listener, ParseCal
 
     private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, int timeout) {
         if (isExo()) if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), this.format = format, this.drm = drm, checkSub(this.subs = subs), decode));
-        if (isIjkOrSys()) if (ijkPlayer != null) ijkPlayer.setMediaSource(IjkUtil.getSource(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), checkSub(this.subs = subs)));
+        if (isIjkOrSys()) if (ijkPlayer != null) ijkPlayer.setMediaSource(IjkUtil.getSource(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), checkSub(this.subs = subs)), getPosition());
 
         App.post(runnable, timeout);
         session.setActive(true);

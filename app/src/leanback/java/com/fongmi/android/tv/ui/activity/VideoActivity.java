@@ -30,6 +30,8 @@ import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
+import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.SubtitleView;
 
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -99,6 +101,8 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
+
+import tv.danmaku.ijk.media.player.ui.IjkVideoView;
 
 public class VideoActivity extends BaseActivity implements CustomKeyDownVod.Listener, TrackDialog.Listener, ArrayPresenter.OnClickListener, Clock.Callback {
 
@@ -310,7 +314,7 @@ public class VideoActivity extends BaseActivity implements CustomKeyDownVod.List
         mBinding.control.scale.setOnClickListener(view -> onScale());
         mBinding.control.speed.setOnClickListener(view -> onSpeed());
         mBinding.control.reset.setOnClickListener(view -> onReset());
-        mBinding.control.player.setOnClickListener(view -> onChoose());
+        mBinding.control.player.setOnClickListener(view -> onPlayer());
         mBinding.control.decode.setOnClickListener(view -> onDecode());
         mBinding.control.ending.setOnClickListener(view -> onEnding());
         mBinding.control.change2.setOnClickListener(view -> onChange());
@@ -399,6 +403,14 @@ public class VideoActivity extends BaseActivity implements CustomKeyDownVod.List
         if (getId().startsWith("push://")) getIntent().putExtra("key", "push_agent").putExtra("id", getId().substring(7));
         if (getId().isEmpty() || getId().startsWith("msearch:")) setEmpty(false);
         else getDetail();
+    }
+
+    private PlayerView getExo() {
+        return mBinding.exo;
+    }
+
+    private IjkVideoView getIjk() {
+        return mBinding.ijk;
     }
 
     private void getDetail() {
@@ -821,6 +833,15 @@ public class VideoActivity extends BaseActivity implements CustomKeyDownVod.List
 
     private void onChoose() {
         mPlayers.choose(this, mBinding.widget.title.getText());
+    }
+
+    private void onPlayer() {
+        mPlayers.togglePlayer();
+        getIjk().setPlayer(mPlayers.getPlayerId());
+        mBinding.control.player.setText(mPlayers.getPlayerText());
+        getExo().setVisibility(mPlayers.isExo() ? View.VISIBLE : View.GONE);
+        getIjk().setVisibility(mPlayers.isIjkOrSys() ? View.VISIBLE : View.GONE);
+        onRefresh();
     }
 
     private void onDecode() {
