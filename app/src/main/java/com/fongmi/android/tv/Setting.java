@@ -206,7 +206,7 @@ public class Setting {
     }
 
     public static boolean getUpdate() {
-        return Prefers.getBoolean("update", true);
+        return Prefers.getBoolean("update", false);
     }
 
     public static void putUpdate(boolean update) {
@@ -246,7 +246,7 @@ public class Setting {
     }
 
     public static float getSubtitleTextSize() {
-        return Prefers.getFloat("subtitle_text_size");
+        return Prefers.getFloat("subtitle_text_size", 36);
     }
 
     public static void putSubtitleTextSize(float value) {

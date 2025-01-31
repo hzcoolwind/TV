@@ -7,36 +7,38 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fongmi.android.tv.bean.Track;
-import com.fongmi.android.tv.databinding.AdapterTrackBinding;
+import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.databinding.AdapterPlayerBinding;
+import com.fongmi.android.tv.utils.ResUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> {
+public class PlayerAdapter extends RecyclerView.Adapter<PlayerAdapter.ViewHolder> {
 
     private final OnClickListener mListener;
-    private final List<Track> mItems;
+    private final List<Integer> mItems;
+    private final String[] mPlayers;
+    private int selected;
 
-    public TrackAdapter(OnClickListener listener) {
+    public PlayerAdapter(OnClickListener listener) {
         this.mListener = listener;
+        this.mPlayers = ResUtil.getStringArray(R.array.select_player);
         this.mItems = new ArrayList<>();
+        for(int i= 0; i<this.mPlayers.length; i++) this.mItems.add(i);
     }
 
     public interface OnClickListener {
 
-        void onItemClick(Track item);
+        void onItemClick(Integer item);
     }
 
-    public TrackAdapter addAll(List<Track> items) {
-        mItems.addAll(items);
-        notifyDataSetChanged();
-        return this;
+    public void setSelected(int player) {
+        this.selected = player;
     }
 
     public int getSelected() {
-        for (int i = 0; i < mItems.size(); i++) if (mItems.get(i).isSelected()) return i;
-        return 0;
+        return this.selected;
     }
 
     @Override
@@ -47,21 +49,21 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(AdapterTrackBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        return new ViewHolder(AdapterPlayerBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Track item = mItems.get(position);
-        holder.binding.text.setText(Integer.toString(position)+ ": " + item.getName());
-        holder.binding.text.setActivated(item.isSelected());
+        Integer item = mItems.get(position);
+        holder.binding.text.setText(mPlayers[item]);
+        holder.binding.text.setActivated(item == selected);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private final AdapterTrackBinding binding;
+        private final AdapterPlayerBinding binding;
 
-        public ViewHolder(@NonNull AdapterTrackBinding binding) {
+        public ViewHolder(@NonNull AdapterPlayerBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
             itemView.setOnClickListener(this);
@@ -69,8 +71,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
 
         @Override
         public void onClick(View view) {
-            Track item = mItems.get(getLayoutPosition()).toggle();
-            notifyItemChanged(getLayoutPosition());
+            Integer item = mItems.get(getLayoutPosition());
             mListener.onItemClick(item);
         }
     }

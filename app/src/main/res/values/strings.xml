@@ -154,7 +154,7 @@
     </string-array>
 
     <string-array name="select_player">
-        <item>System</item>
+        <item>SYS</item>
         <item>IJK</item>
         <item>EXO</item>
     </string-array>

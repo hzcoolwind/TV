@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/progressLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
 
     <FrameLayout
         android:id="@+id/video"
@@ -21,11 +22,20 @@
         android:nextFocusDown="@id/flag">
 
         <androidx.media3.ui.PlayerView
-            android:id="@+id/exo"
+            android:id="@+id/surface"
             style="@style/Player.Vod"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:visibility="gone"
             app:surface_type="surface_view" />
+
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/texture"
+            style="@style/Player.Vod"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:surface_type="texture_view" />
 
         <tv.danmaku.ijk.media.player.ui.IjkVideoView
             android:id="@+id/ijk"

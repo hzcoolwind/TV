@@ -3,10 +3,8 @@ package com.fongmi.android.tv.player.ijk;
 import android.content.res.Resources;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
-import androidx.media3.common.MimeTypes;
 import androidx.media3.common.util.Util;
 import androidx.media3.ui.R;
 
@@ -15,11 +13,11 @@ import com.fongmi.android.tv.App;
 
 import java.util.Locale;
 
-public class TrackNameProvider {
+public class IjkTrackNameProvider {
 
     private final Resources resources;
 
-    public TrackNameProvider() {
+    public IjkTrackNameProvider() {
         this.resources = App.get().getResources();
     }
 

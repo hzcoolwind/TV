@@ -239,13 +239,18 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer implements MediaPlay
 
     @Override
     public int getSelectedTrack(int type) {
+
         switch (type) {
             case ITrackInfo.MEDIA_TRACK_TYPE_VIDEO:
                 return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_VIDEO);
             case ITrackInfo.MEDIA_TRACK_TYPE_AUDIO:
                 return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_AUDIO);
             case ITrackInfo.MEDIA_TRACK_TYPE_TEXT:
-                return getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
+                 int tracknum;
+                 tracknum = getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
+                 if (tracknum<0)
+                     tracknum = getTrack(MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE);
+                 return tracknum;
             default:
                 return -1;
         }

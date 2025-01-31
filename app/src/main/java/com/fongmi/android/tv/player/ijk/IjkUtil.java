@@ -39,6 +39,10 @@ public class IjkUtil {
         for (Sub sub : subs) configs.add(sub.getConfig());
         return configs;
     }
+
+    public static MediaSource getSource(Map<String, String> headers, Uri url) {
+        return new MediaSource(Players.checkUa(headers), url);
+    }
     public static MediaSource getSource(Map<String, String> headers, Uri url, List<Sub> subs) {
         return new MediaSource(Players.checkUa(headers), url, getSubtitleConfigs(subs));
     }

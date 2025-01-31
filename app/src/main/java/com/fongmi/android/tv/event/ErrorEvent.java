@@ -61,6 +61,10 @@ public class ErrorEvent {
         return code / 1000 == 2 || code / 1000 == 3 || code / 1000 == 4;
     }
 
+    public boolean isUrl() {
+        return Type.URL.equals(getType());
+    }
+
     public String getMsg() {
         if (type == Type.URL) return ResUtil.getString(code == -1 ? R.string.error_play_url : R.string.error_play_url_code, code);
         if (type == Type.DRM) return ResUtil.getString(R.string.error_play_drm_scheme);
