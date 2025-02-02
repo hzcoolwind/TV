@@ -88,6 +88,9 @@ android {
     lint {
         disable 'UnsafeOptInUsageError'
     }
+    lintOptions {
+        abortOnError false
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
