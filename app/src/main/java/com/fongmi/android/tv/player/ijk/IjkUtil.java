@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.view.accessibility.CaptioningManager;
 
+import androidx.annotation.Dimension;
 import androidx.media3.common.MediaItem;
 import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerView;
@@ -32,7 +33,8 @@ public class IjkUtil {
         ijk.getSubtitleView().setStyle(getCaptionStyle());
         ijk.getSubtitleView().setApplyEmbeddedFontSizes(false);
         ijk.getSubtitleView().setApplyEmbeddedStyles(!Setting.isCaption());
-        if (Setting.getSubtitleTextSize() != 0) ijk.getSubtitleView().setFractionalTextSize(Setting.getSubtitleTextSize());
+        if (Setting.getSubtitlePosition() != 0) ijk.getSubtitleView().setTranslationY(Setting.getSubtitlePosition());
+        if (Setting.getSubtitleTextSize() != 0) ijk.getSubtitleView().setFixedTextSize(Dimension.SP, Setting.getSubtitleTextSize());
     }
     private static List<MediaItem.SubtitleConfiguration> getSubtitleConfigs(List<Sub> subs) {
         List<MediaItem.SubtitleConfiguration> configs = new ArrayList<>();

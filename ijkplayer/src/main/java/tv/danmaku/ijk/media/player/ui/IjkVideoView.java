@@ -79,7 +79,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private final FrameLayout mContentFrame;
     private final ImageView mArtworkView;
     private Drawable mDefaultArtwork;
-    private IMediaPlayer mPlayer;
+    public IMediaPlayer mPlayer;
 
     public IjkVideoView(Context context) {
         this(context, null);

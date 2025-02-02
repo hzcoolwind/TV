@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.annotation.Dimension;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -61,13 +62,44 @@ public final class SubtitleDialog extends BaseDialog {
 
     @Override
     protected void initEvent() {
+        binding.up.setOnClickListener(this::onUp);
+        binding.down.setOnClickListener(this::onDown);
+        binding.large.setOnClickListener(this::onLarge);
+        binding.small.setOnClickListener(this::onSmall);
         binding.reset.setOnClickListener(this::onReset);
     }
 
+    private void onUp(View view) {
+        int size = Math.max((int)Setting.getSubtitlePosition() - 2, -75);
+        subtitleView.setTranslationY(size);
+        Setting.putSubtitlePosition(size);
+    }
+
+    private void onDown(View view) {
+        int size = Math.min((int)Setting.getSubtitlePosition() + 2, 50);
+        subtitleView.setTranslationY(size);
+        Setting.putSubtitlePosition(size);
+    }
+
+    private void onLarge(View view) {
+        //subtitleView.setFractionalTextSize(0.002f);
+        //subtitleView.setUserDefaultTextSize();
+        int size = Math.min((int)Setting.getSubtitleTextSize() + 1, 48);
+        subtitleView.setFixedTextSize(Dimension.SP, size);
+        Setting.putSubtitleTextSize(size);
+    }
+
+    private void onSmall(View view) {
+        int size = Math.max((int)Setting.getSubtitleTextSize() - 1, 14);
+        subtitleView.setFixedTextSize(Dimension.SP, size);
+        Setting.putSubtitleTextSize(size);
+    }
+
     private void onReset(View view) {
-        Setting.putSubtitleTextSize(0.0f);
-        Setting.putSubtitlePosition(0.0f);
-        subtitleView.setUserDefaultTextSize();
+        Setting.putSubtitleTextSize(20);
+        Setting.putSubtitlePosition(0);
+        subtitleView.setFixedTextSize(Dimension.SP,20);
+        subtitleView.setTranslationY(0);
     }
 
     @Override
